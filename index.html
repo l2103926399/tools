@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四个小工具</title>
+<style>
+  :root {
+    --paper: #faf8f3;
+    --ink: #1b1a17;
+    --muted: #6f6a60;
+    --faint: #a39d91;
+    --line: #e4dfd4;
+    --accent: #8a1c3c;
+    --mono: ui-monospace, "SF Mono", Consolas, "Cascadia Mono", monospace;
+    --serif: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+    --sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    line-height: 1.7;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  main { width: 100%; max-width: 760px; margin: 0 auto; padding: 64px 24px 40px; flex: 1 0 auto; }
+
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .22em;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: var(--serif);
+    font-size: 40px;
+    line-height: 1.25;
+    letter-spacing: -.5px;
+    margin: 10px 0 12px;
+  }
+  .lede { color: var(--muted); font-size: 15px; max-width: 52ch; }
+
+  .group-title {
+    margin: 44px 0 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: var(--faint);
+  }
+  .list { list-style: none; border-top: 1px solid var(--line); }
+  .list li { border-bottom: 1px solid var(--line); }
+  .list a {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 20px;
+    gap: 14px;
+    align-items: center;
+    padding: 18px 4px;
+    text-decoration: none;
+    color: inherit;
+    transition: background .15s;
+  }
+  .list a:hover { background: #fffdf8; }
+  .no { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  .name { display: block; font-family: var(--serif); font-size: 18px; font-weight: 700; letter-spacing: .01em; }
+  .desc { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .arrow { color: var(--faint); font-size: 16px; transition: transform .15s, color .15s; }
+  .list a:hover .arrow { transform: translateX(3px); color: var(--accent); }
+
+  .note {
+    margin-top: 34px;
+    padding: 14px 16px;
+    border-left: 2px solid var(--line);
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.8;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+
+  footer {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 20px 24px 30px;
+    border-top: 1px solid var(--line);
+    color: var(--faint);
+    font-size: 12px;
+    font-family: var(--mono);
+    letter-spacing: .04em;
+  }
+  @media (max-width: 560px) {
+    main { padding: 40px 18px 28px; }
+    h1 { font-size: 31px; }
+    .list a { grid-template-columns: 34px minmax(0, 1fr) 16px; gap: 10px; padding: 15px 2px; }
+    .name { font-size: 16.5px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="kicker">TOOLBOX · FOUR TOOLS</div>
+  <h1>四个小工具</h1>
+  <p class="lede">课程项目里反复用到的四件事：分工与贡献度、经营测算、问卷数据处理、商业分析框架。都能离线用，数据只留在你自己的浏览器里。</p>
+
+  <div class="group-title">本地工具</div>
+  <ul class="list">
+    <li>
+      <a href="./group/">
+        <span class="no">01</span>
+        <span>
+          <span class="name">小组成员贡献度</span>
+          <span class="desc">拆任务、设权重、看进度与贡献排名 · 组员间用导出/导入 JSON 同步</span>
+        </span>
+        <span class="arrow">→</span>
+      </a>
+    </li>
+    <li>
+      <a href="./profit/">
+        <span class="no">02</span>
+        <span>
+          <span class="name">经营测算小工具</span>
+          <span class="desc">填单价、销量、成本，算收入、净利、ROI、保本点与敏感性</span>
+        </span>
+        <span class="arrow">→</span>
+      </a>
+    </li>
+    <li>
+      <a href="./survey/">
+        <span class="no">03</span>
+        <span>
+          <span class="name">问卷数据分析</span>
+          <span class="desc">导入问卷星 CSV，清洗无效答卷，做交叉统计并导出图表</span>
+        </span>
+        <span class="arrow">→</span>
+      </a>
+    </li>
+    <li>
+      <a href="./business/">
+        <span class="no">04</span>
+        <span>
+          <span class="name">商业分析模型工具箱</span>
+          <span class="desc">SWOT、波特五力、商业模式画布、营销 4P，填关键词生成初稿</span>
+        </span>
+        <span class="arrow">→</span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="group-title">在线服务</div>
+  <ul class="list">
+    <li>
+      <a href="https://bili-case-tool.onrender.com" target="_blank" rel="noopener">
+        <span class="no">↗</span>
+        <span>
+          <span class="name">B站优质视频案例库</span>
+          <span class="desc">关键词检索 B站 视频并按质量分排序 · 有后端，免费实例闲置会休眠</span>
+        </span>
+        <span class="arrow">↗</span>
+      </a>
+    </li>
+  </ul>
+
+  <p class="note">
+    <b>关于数据：</b>这四个工具的数据都存在你自己的浏览器（localStorage / IndexedDB），不上传、不共享。换电脑或换浏览器时，请用各工具里的「导出备份 / 导入备份」迁移。<br>
+    <b>关于同步：</b>小组成员贡献度需要多人共用时，目前只能由协调人导出 JSON 发给组员导入，不是实时同步。
+  </p>
+</main>
+<footer>静态站点 · GitHub Pages · 无后端、无追踪</footer>
+</body>
+</html>

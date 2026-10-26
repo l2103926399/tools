@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小组协作与贡献度管理工具</title>
+<style>
+/* ===== 设计变量：暖纸张 + 墨绿 ===== */
+:root {
+  --paper: #f5f1e8;
+  --surface: #fffdf7;
+  --surface-2: #f0ebe0;
+  --ink: #241f19;
+  --muted: #7c7264;
+  --muted-2: #a89d8c;
+  --line: #e7dfd0;
+  --line-strong: #d8cdb9;
+  --accent: #0f766e;
+  --accent-hover: #0b5f59;
+  --accent-2: #14b8a6;
+  --accent-soft: #e4f2ef;
+  --amber: #b45309;
+  --amber-soft: #fdf3e3;
+  --danger: #b91c1c;
+  --danger-soft: #fdecea;
+  --sidebar: #221f1a;
+  --sidebar-ink: #f5f1e8;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow-sm: 0 1px 2px rgba(36, 31, 25, .05);
+  --shadow-md: 0 10px 28px rgba(36, 31, 25, .12);
+  --font: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--ink);
+  background: var(--paper);
+  min-height: 100vh;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+
+/* ===== 外壳：左侧工作台 + 右侧内容 ===== */
+.shell { display: flex; min-height: 100vh; }
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: 236px;
+  flex-shrink: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 14px 18px;
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
+}
+.brand { display: flex; align-items: center; gap: 10px; padding: 2px 10px 16px; }
+.brand-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(140deg, #14b8a6, #0f766e 60%, #b45309);
+  box-shadow: 0 2px 8px rgba(20, 184, 166, .35);
+  flex-shrink: 0;
+}
+.brand-text { display: flex; flex-direction: column; font-weight: 650; font-size: 15px; line-height: 1.25; }
+.brand-text small { font-weight: 400; font-size: 11.5px; color: rgba(245, 241, 232, .55); letter-spacing: .4px; }
+.side-cap {
+  padding: 10px 10px 6px;
+  font-size: 11px;
+  letter-spacing: .16em;
+  color: rgba(245, 241, 232, .4);
+}
+.tabs { display: flex; flex-direction: column; gap: 3px; }
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(245, 241, 232, .66);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.tab::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .45;
+  flex-shrink: 0;
+}
+.tab:hover { background: rgba(245, 241, 232, .07); color: var(--sidebar-ink); }
+.tab.active { background: rgba(20, 184, 166, .16); color: #5eead4; font-weight: 600; }
+.tab.active::before { background: #5eead4; opacity: 1; }
+.side-note {
+  margin-top: auto;
+  padding: 12px 10px 4px;
+  font-size: 11.5px;
+  line-height: 1.8;
+  color: rgba(245, 241, 232, .35);
+  border-top: 1px solid rgba(245, 241, 232, .1);
+}
+
+/* ===== 主区域 ===== */
+.workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+main { flex: 1 0 auto; width: 100%; max-width: 940px; margin: 0 auto; padding: 34px 32px 44px; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* ===== 卡片 ===== */
+.card {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow-sm);
+}
+.card h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: .2px;
+}
+.card h2::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--accent-2);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, .14);
+}
+
+/* ===== 按钮 ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 15px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, transform .05s;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn.danger { color: var(--danger); border-color: #f3c9c4; background: transparent; }
+.btn.danger:hover { background: var(--danger-soft); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ===== 表单 ===== */
+input[type="text"], input[type="date"], select {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  outline: none;
+  transition: border-color .15s, box-shadow .15s;
+}
+input[type="text"]:focus, input[type="date"]:focus, select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, .16);
+}
+select { cursor: pointer; }
+
+/* ===== 成员 ===== */
+.member-add-row { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+.member-add-row input { flex: 1 1 220px; }
+.member-list { display: flex; flex-direction: column; gap: 6px; }
+.member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.member-name { font-weight: 500; }
+.member-name::before { content: "· "; color: var(--accent-2); font-weight: 700; }
+.empty {
+  padding: 20px 14px;
+  text-align: center;
+  color: var(--muted-2);
+  font-size: 13.5px;
+  background: var(--surface-2);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.tip { margin-top: 10px; font-size: 12.5px; line-height: 1.75; color: var(--muted); }
+
+/* ===== 工具栏 ===== */
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ===== 任务 ===== */
+.task-list { display: flex; flex-direction: column; gap: 8px; }
+.task-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 80px 104px auto;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 15px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  transition: box-shadow .15s, border-color .15s;
+}
+.task-row:hover { box-shadow: var(--shadow-sm); border-color: var(--line-strong); }
+@media (max-width: 700px) {
+  .task-row { display: flex; flex-wrap: wrap; justify-content: space-between; }
+  .task-actions { width: 100%; justify-content: flex-end; }
+}
+.task-row.row-overdue { border-left-color: var(--danger); background: #fffaf9; }
+.task-row.row-duesoon { border-left-color: #d97706; background: var(--amber-soft); }
+.task-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.task-name { font-size: 14px; font-weight: 600; }
+.task-meta { font-size: 12.5px; color: var(--muted); }
+.badge { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+.badge-overdue { background: var(--danger-soft); color: var(--danger); }
+.badge-duesoon { background: var(--amber-soft); color: var(--amber); border: 1px solid #f0dcb4; }
+.task-actions { display: flex; gap: 6px; }
+
+/* ===== 弹窗 ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(36, 31, 25, .42);
+  backdrop-filter: blur(2px);
+  z-index: 100;
+}
+.modal { width: 420px; max-width: 100%; padding: 24px; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow-md); }
+.modal-title { margin-bottom: 16px; font-size: 16px; font-weight: 650; }
+.modal-body label { display: block; margin-bottom: 12px; font-size: 13px; color: var(--muted); }
+.modal-body input, .modal-body select { width: 100%; margin-top: 5px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.modal-tip { min-height: 18px; margin-top: 8px; color: var(--danger); font-size: 12.5px; }
+
+/* ===== 看板 ===== */
+.board-header { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+.board-rate { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.board-rate-label { font-size: 13.5px; color: var(--muted); }
+.board-rate-label strong { color: var(--ink); font-size: 15px; }
+.progress-track {
+  width: 200px;
+  height: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #0f766e, #2dd4bf);
+  transition: width .3s ease;
+}
+.board-views { display: flex; gap: 6px; }
+.view-btn.active { background: var(--accent-soft); border-color: #9ed8cf; color: var(--accent); font-weight: 600; }
+
+.board-cols { display: flex; gap: 12px; align-items: flex-start; flex-wrap: wrap; }
+.board-col {
+  flex: 1 1 220px;
+  min-width: 220px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.board-col-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; font-size: 13.5px; font-weight: 600; }
+.board-col-count { padding: 0 8px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); font-size: 11.5px; }
+.board-col-cards { display: flex; flex-direction: column; gap: 8px; }
+.board-group { margin-bottom: 16px; }
+.board-group-title { margin-bottom: 8px; font-size: 14px; font-weight: 600; }
+.board-group-rate { margin-left: 6px; color: var(--accent); font-size: 12.5px; }
+.board-group-cards { display: flex; flex-direction: column; gap: 8px; }
+.board-card {
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+}
+.board-card.row-overdue { border-left-color: var(--danger); }
+.board-card.row-duesoon { border-left-color: #d97706; }
+.board-card-name { margin-bottom: 3px; font-size: 13.5px; font-weight: 600; }
+.board-card-meta { font-size: 12px; color: var(--muted); }
+.board-card-bottom { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.board-progress-select { height: 30px; font-size: 12.5px; }
+
+/* ===== 贡献度 ===== */
+.detail-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.rank-row { display: flex; align-items: center; gap: 12px; padding: 11px 4px; border-bottom: 1px solid var(--line); }
+.rank-row:last-child { border-bottom: none; }
+.rank-badge {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.rank-badge.r1 { background: #f6e3b4; color: #8a5a00; }
+.rank-badge.r2 { background: #e4ded1; color: #6b6153; }
+.rank-badge.r3 { background: #f3ddc8; color: #8f4f1f; }
+.rank-name { width: 96px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rank-value { width: 92px; font-size: 12.5px; color: var(--muted); }
+.rank-ratio { width: 64px; text-align: right; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.rank-bar-track { flex: 1; min-width: 60px; height: 8px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.rank-bar-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #0f766e, #2dd4bf); }
+.formula-text { font-size: 13px; line-height: 1.9; color: var(--muted); }
+.detail-member { margin-bottom: 8px; }
+.detail-summary {
+  padding: 8px 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  background: var(--surface-2);
+  border-radius: var(--radius-sm);
+}
+.detail-table { width: 100%; margin-top: 8px; border-collapse: collapse; font-size: 13px; }
+.detail-table th, .detail-table td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--line); }
+.detail-table th { font-size: 12.5px; font-weight: 500; color: var(--muted); background: var(--surface-2); }
+
+/* ===== 总览 ===== */
+.overview-head { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; padding: 24px 24px; }
+.ov-project { font-size: 21px; font-weight: 650; letter-spacing: -.2px; }
+.ov-stats { margin-top: 6px; font-size: 13px; color: var(--muted); }
+.ov-rate-box { text-align: right; }
+.ov-rate-num { font-size: 38px; font-weight: 700; line-height: 1.05; color: var(--accent); font-variant-numeric: tabular-nums; }
+.progress-track.wide { width: 240px; height: 10px; margin-top: 8px; }
+.ov-member-row { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+.ov-member-row:last-child { border-bottom: none; }
+.ov-member-name { width: 96px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-member-pct { width: 52px; text-align: right; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+.ov-member-doing { width: 96px; font-size: 12.5px; color: var(--muted-2); }
+.ov-due-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.ov-due-row.due-overdue { background: var(--danger-soft); border-color: #f3c9c4; }
+.ov-due-row.due-soon { background: var(--amber-soft); border-color: #f0dcb4; }
+.ov-due-name { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-due-meta { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.quick-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ===== 数据管理 ===== */
+.proj-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+.proj-row input { width: 300px; max-width: 100%; }
+.data-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+
+/* ===== 页脚 ===== */
+.app-footer {
+  flex-shrink: 0;
+  max-width: 940px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 18px 32px 26px;
+  border-top: 1px solid var(--line);
+  color: var(--muted-2);
+  font-size: 12px;
+  line-height: 1.9;
+  text-align: center;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 900px) {
+  .shell { display: block; }
+  .sidebar { position: static; width: auto; height: auto; flex-direction: row; align-items: center; gap: 10px; padding: 10px 14px; overflow-x: auto; }
+  .brand { padding: 0 8px 0 0; flex-shrink: 0; }
+  .brand-text small { display: none; }
+  .side-cap, .side-note { display: none; }
+  .tabs { flex-direction: row; gap: 2px; }
+  .tab { width: auto; padding: 7px 11px; font-size: 13.5px; }
+  .tab::before { display: none; }
+  main { padding: 22px 18px 36px; }
+  .app-footer { padding: 16px 18px 24px; }
+  .board-col { flex: 1 1 100%; min-width: 0; }
+  .ov-rate-num { font-size: 30px; }
+  .progress-track.wide { width: 180px; }
+}
+
+@media (max-width: 620px) {
+  .rank-row { flex-wrap: wrap; }
+  .rank-name { width: auto; }
+  .rank-bar-track { flex-basis: 100%; order: 5; }
+  .ov-member-row { flex-wrap: wrap; }
+  .ov-member-doing { width: auto; }
+  .card { padding: 16px; }
+  .overview-head { padding: 18px; }
+}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-text">小组协作<small>贡献度管理</small></span>
+      </div>
+      <div class="side-cap">工作台</div>
+      <nav class="tabs" id="nav-tabs">
+        <button class="tab active" data-page="overview">总览</button>
+        <button class="tab" data-page="tasks">任务管理</button>
+        <button class="tab" data-page="board">进度看板</button>
+        <button class="tab" data-page="contribution">贡献度</button>
+        <button class="tab" data-page="settings">数据管理</button>
+      </nav>
+      <div class="side-note">数据只存在本机<br>记得定期导出备份</div>
+    </aside>
+    <div class="workspace">
+  <main>
+    <section id="page-overview" class="page active">
+      <div class="card overview-head">
+        <div>
+          <div class="ov-project" id="ov-project-name"></div>
+          <div class="ov-stats" id="ov-stats"></div>
+        </div>
+        <div class="ov-rate-box">
+          <div class="ov-rate-num" id="ov-rate-num">0%</div>
+          <div class="progress-track wide"><div class="progress-fill" id="ov-rate-bar"></div></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>成员进度</h2>
+        <div id="ov-members"></div>
+      </div>
+      <div class="card">
+        <h2>临期提醒</h2>
+        <div id="ov-due"></div>
+      </div>
+      <div class="card">
+        <h2>快捷操作</h2>
+        <div class="quick-actions">
+          <button class="btn primary" data-go="tasks">添加任务</button>
+          <button class="btn" data-go="board">更新进度</button>
+          <button class="btn" data-go="contribution">查看贡献度</button>
+        </div>
+      </div>
+    </section>
+    <section id="page-tasks" class="page">
+      <div class="card">
+        <div class="toolbar">
+          <div class="filters">
+            <select id="filter-status">
+              <option value="">全部状态</option>
+              <option value="0">未开始</option>
+              <option value="0.5">进行中</option>
+              <option value="1">已完成</option>
+            </select>
+            <select id="filter-owner">
+              <option value="">全部责任人</option>
+            </select>
+          </div>
+          <button id="btn-new-task" class="btn primary">添加任务</button>
+        </div>
+        <div id="task-list" class="task-list"></div>
+      </div>
+    </section>
+    <section id="page-board" class="page">
+      <div class="card">
+        <div class="board-header">
+          <div class="board-rate">
+            <div class="board-rate-label">整体完成率：<strong id="board-rate-value">0%</strong></div>
+            <div class="progress-track"><div class="progress-fill" id="board-rate-bar"></div></div>
+          </div>
+          <div class="board-views">
+            <button class="btn view-btn active" data-view="status">按状态</button>
+            <button class="btn view-btn" data-view="member">按成员</button>
+          </div>
+        </div>
+        <div id="board-content"></div>
+      </div>
+    </section>
+    <section id="page-contribution" class="page">
+      <div class="card">
+        <h2>贡献度排名</h2>
+        <div id="contribution-list"></div>
+      </div>
+      <div class="card">
+        <div class="detail-head">
+          <h2>贡献明细</h2>
+          <button id="btn-toggle-detail" class="btn">展开明细</button>
+        </div>
+        <p class="tip">展开后按成员列出每项任务的权重、完成度与分值，便于核对。</p>
+        <div id="contribution-detail" style="display:none"></div>
+      </div>
+      <div class="card">
+        <h2>核算口径说明</h2>
+        <p class="formula-text">
+          贡献值 = 每个任务的（权重 × 完成度）相加；完成度：未开始 0%、进行中 50%、已完成 100%。<br>
+          贡献占比 = 个人贡献值 ÷ 全队贡献值之和；排名按贡献占比从高到低，占比合计恒为 100%。
+        </p>
+      </div>
+    </section>
+    <section id="page-settings" class="page">
+      <div class="card">
+        <h2>项目信息</h2>
+        <div class="proj-row">
+          <input id="project-name-input" type="text" placeholder="输入项目名称">
+          <button id="btn-save-project" class="btn primary">保存</button>
+        </div>
+        <div class="tip" id="project-tip">项目名称会显示在首页概览中。</div>
+      </div>
+      <div class="card">
+        <h2>成员名单</h2>
+        <div class="member-add-row">
+          <input id="member-name-input" type="text" placeholder="输入成员姓名">
+          <button id="btn-add-member" class="btn primary">添加成员</button>
+        </div>
+        <div id="member-list" class="member-list"></div>
+        <div id="member-tip" class="tip"></div>
+      </div>
+      <div class="card">
+        <h2>数据备份与恢复</h2>
+        <div class="data-actions">
+          <button id="btn-export" class="btn">导出数据备份</button>
+          <button id="btn-import" class="btn">导入数据恢复</button>
+          <button id="btn-reset" class="btn danger">清空全部数据</button>
+          <input id="import-file" type="file" accept=".json,application/json" style="display:none">
+        </div>
+        <div class="tip" id="data-tip">
+          数据保存在本机浏览器中，清除浏览器数据会丢失，请定期导出备份。<br>
+          组员之间同步：协调人导出文件 → 发给组员 → 组员导入（导入会覆盖当前数据）。
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="app-footer">
+    使用说明：① 先到「数据管理」命名项目并添加成员；② 到「任务管理」拆解任务，设置责任人、截止时间与权重；③ 每周到「进度看板」更新完成度；④ 期末到「贡献度」查看排名。<br>
+    数据保存在本机浏览器中，清除浏览器数据会丢失，请定期到「数据管理」导出备份；组员间通过导出/导入文件同步。
+  </footer>
+    </div>
+  </div>
+  <!-- 通用弹窗容器（阶段 4 使用） -->
+  <div id="modal-root"></div>
+  <script>
+    "use strict";
+    window.App = {};
+
+    // ===== ① 数据层 =====
+    (function () {
+      const STORAGE_KEY = 'gcm_data_v1';
+
+      function defaultState() {
+        return {
+          version: 1,
+          projectName: '未命名项目',
+          members: [],
+          tasks: []
+        };
+      }
+
+      function load() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultState();
+          const data = JSON.parse(raw);
+          const s = Object.assign(defaultState(), data);
+          if (!Array.isArray(s.members)) s.members = [];
+          if (!Array.isArray(s.tasks)) s.tasks = [];
+          return s;
+        } catch (e) {
+          return defaultState();
+        }
+      }
+
+      function save() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(App.state));
+        } catch (e) {
+          alert('保存失败：浏览器本地存储不可用或已满。');
+        }
+      }
+
+      App.state = load();
+      App.load = load;
+      App.save = save;
+      App.STORAGE_KEY = STORAGE_KEY;
+    })();
+
+    // ===== ② 计算函数 =====
+    (function () {
+      // progress 取值：0=未开始, 0.5=进行中, 1=已完成
+      const PROGRESS_MAP = { '0': 0, '0.5': 0.5, '1': 1 };
+
+      function taskWeight(t) { return Number(t.weight) || 0; }
+      function taskDone(t) { return PROGRESS_MAP[String(t.progress)] !== undefined ? PROGRESS_MAP[String(t.progress)] : 0; }
+
+      function fmtDate(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return y + '-' + m + '-' + day;
+      }
+
+      /** 距截止还有几天（今天=0，已过=负数）。now 可注入，默认当前时间。 */
+      function daysDiff(due, now) {
+        const base = now || new Date();
+        const d1 = new Date(fmtDate(base) + 'T00:00:00');
+        const d2 = new Date(String(due).slice(0, 10) + 'T00:00:00');
+        return Math.round((d2 - d1) / 86400000);
+      }
+
+      /** 临期状态：none 无截止 / overdue 已逾期 / dueSoon ≤3天 / normal 正常 */
+      function dueStatus(due, now) {
+        if (!due) return 'none';
+        const diff = daysDiff(due, now);
+        if (diff < 0) return 'overdue';
+        if (diff <= 3) return 'dueSoon';
+        return 'normal';
+      }
+
+      /** 整体完成率 = Σ(权重×完成度) ÷ Σ(权重) */
+      function overallRate() {
+        const tasks = App.state.tasks;
+        const totalW = tasks.reduce(function (s, t) { return s + taskWeight(t); }, 0);
+        if (totalW === 0) return 0;
+        const got = tasks.reduce(function (s, t) { return s + taskWeight(t) * taskDone(t); }, 0);
+        return got / totalW;
+      }
+
+      /** 成员完成率 = 该成员名下 Σ(权重×完成度) ÷ Σ(权重) */
+      function memberRate(name) {
+        const tasks = App.state.tasks.filter(function (t) { return t.owner === name; });
+        const totalW = tasks.reduce(function (s, t) { return s + taskWeight(t); }, 0);
+        if (totalW === 0) return 0;
+        const got = tasks.reduce(function (s, t) { return s + taskWeight(t) * taskDone(t); }, 0);
+        return got / totalW;
+      }
+
+      /** 贡献度：返回 [{name, value, ratio, rank}]，按贡献值降序 */
+      function contribution() {
+        const rows = App.state.members.map(function (name) {
+          const value = App.state.tasks
+            .filter(function (t) { return t.owner === name; })
+            .reduce(function (s, t) { return s + taskWeight(t) * taskDone(t); }, 0);
+          return { name: name, value: value };
+        });
+        const total = rows.reduce(function (s, r) { return s + r.value; }, 0);
+        rows.forEach(function (r) { r.ratio = total > 0 ? r.value / total : 0; });
+        rows.sort(function (a, b) { return b.value - a.value; });
+        rows.forEach(function (r, i) { r.rank = i + 1; });
+        return rows;
+      }
+
+      App.PROGRESS_MAP = PROGRESS_MAP;
+      App.taskWeight = taskWeight;
+      App.taskDone = taskDone;
+      App.overallRate = overallRate;
+      App.memberRate = memberRate;
+      App.contribution = contribution;
+      App.dueStatus = dueStatus;
+      App.daysDiff = daysDiff;
+    })();
+
+    // ===== ③ 渲染函数 =====
+    (function () {
+      function renderSettings() {
+        // 项目信息（输入框仅在未聚焦时回填，避免打断输入）
+        const projInput = document.getElementById('project-name-input');
+        if (projInput && document.activeElement !== projInput) projInput.value = App.state.projectName;
+        // 成员名单
+        const list = document.getElementById('member-list');
+        if (!list) return;
+        if (App.state.members.length === 0) {
+          list.innerHTML = '<div class="empty">还没有成员，先添加一位吧。</div>';
+        } else {
+          // 用 data-i 索引定位，成员姓名一律 textContent 填充，防止注入
+          list.innerHTML = App.state.members.map(function (name, i) {
+            return '<div class="member-item"><span class="member-name" data-i="' + i + '"></span>' +
+              '<button class="btn danger btn-del-member" data-i="' + i + '">删除</button></div>';
+          }).join('');
+          list.querySelectorAll('.member-name').forEach(function (el) {
+            el.textContent = App.state.members[Number(el.dataset.i)];
+          });
+        }
+      }
+
+      var PROGRESS_TEXT = { '0': '未开始', '0.5': '进行中', '1': '已完成' };
+
+      // 渲染责任人筛选下拉（保留当前选择）
+      function renderTaskFilters() {
+        const fo = document.getElementById('filter-owner');
+        if (!fo) return;
+        const cur = fo.value;
+        const opts = ['<option value="">全部责任人</option>']
+          .concat(App.state.members.map(function (name) {
+            return '<option value="' + name.replace(/"/g, '&quot;') + '">' + name + '</option>';
+          }));
+        fo.innerHTML = opts.join('');
+        fo.value = cur;
+      }
+
+      function renderTasks() {
+        const list = document.getElementById('task-list');
+        if (!list) return;
+        renderTaskFilters();
+        let tasks = Array.from(App.state.tasks);
+        const fs = document.getElementById('filter-status');
+        const fo = document.getElementById('filter-owner');
+        if (fs && fs.value !== '') tasks = tasks.filter(function (t) { return String(t.progress) === fs.value; });
+        if (fo && fo.value !== '') tasks = tasks.filter(function (t) { return t.owner === fo.value; });
+        if (tasks.length === 0) {
+          list.innerHTML = '<div class="empty">' + (App.state.tasks.length === 0 ? '还没有任务，点击右上角"添加任务"创建第一个任务。' : '没有符合筛选条件的任务。') + '</div>';
+          return;
+        }
+        list.innerHTML = tasks.map(function (t) {
+          const st = App.dueStatus(t.due);
+          const cls = st === 'overdue' ? 'row-overdue' : st === 'dueSoon' ? 'row-duesoon' : '';
+          const badge = st === 'overdue' ? '<span class="badge badge-overdue">已逾期</span>'
+            : st === 'dueSoon' ? '<span class="badge badge-duesoon">临期</span>' : '';
+          return '<div class="task-row ' + cls + '" data-id="' + t.id + '">' +
+            '<div class="task-main">' +
+              '<div class="task-name" data-f="name"></div>' +
+              '<div class="task-meta">责任人：<span data-f="owner"></span></div>' +
+              '<div class="task-meta">截止：<span data-f="due"></span>' + badge + '</div>' +
+            '</div>' +
+            '<div class="task-meta">权重：<span data-f="weight"></span></div>' +
+            '<div class="task-meta">完成度：<span data-f="progress"></span></div>' +
+            '<div class="task-actions">' +
+              '<button class="btn btn-edit-task">编辑</button>' +
+              '<button class="btn danger btn-del-task">删除</button>' +
+            '</div>' +
+          '</div>';
+        }).join('');
+        // 用户输入字段一律 textContent 填充，防止注入
+        list.querySelectorAll('.task-row').forEach(function (row) {
+          const t = App.state.tasks.find(function (x) { return x.id === row.dataset.id; });
+          if (!t) return;
+          row.querySelector('[data-f="name"]').textContent = t.name;
+          row.querySelector('[data-f="owner"]').textContent = t.owner || '未分配';
+          row.querySelector('[data-f="due"]').textContent = t.due || '—';
+          row.querySelector('[data-f="weight"]').textContent = t.weight;
+          row.querySelector('[data-f="progress"]').textContent = PROGRESS_TEXT[String(t.progress)] || '未开始';
+        });
+      }
+
+      function renderBoard() {
+        const content = document.getElementById('board-content');
+        if (!content) return;
+        const rate = App.overallRate();
+        const rateVal = document.getElementById('board-rate-value');
+        const rateBar = document.getElementById('board-rate-bar');
+        if (rateVal) rateVal.textContent = Math.round(rate * 100) + '%';
+        if (rateBar) rateBar.style.width = Math.round(rate * 100) + '%';
+        document.querySelectorAll('.view-btn').forEach(function (b) {
+          b.classList.toggle('active', b.dataset.view === App.boardView);
+        });
+
+        if (App.state.tasks.length === 0) {
+          content.innerHTML = '<div class="empty">还没有任务，先到"任务管理"页创建。</div>';
+          return;
+        }
+
+        // 组标题等拼进 innerHTML 的用户输入需要转义；任务卡片内容统一 textContent 填充
+        function esc(s) {
+          return String(s).replace(/[&<>"']/g, function (c) {
+            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+          });
+        }
+        function cardHtml(t) {
+          const st = App.dueStatus(t.due);
+          const cls = st === 'overdue' ? ' row-overdue' : st === 'dueSoon' ? ' row-duesoon' : '';
+          const badge = st === 'overdue' ? '<span class="badge badge-overdue">已逾期</span>'
+            : st === 'dueSoon' ? '<span class="badge badge-duesoon">临期</span>' : '';
+          return '<div class="board-card' + cls + '" data-id="' + t.id + '">' +
+            '<div class="board-card-name" data-f="name"></div>' +
+            '<div class="board-card-meta">责任人：<span data-f="owner"></span></div>' +
+            '<div class="board-card-meta">截止：<span data-f="due"></span>' + badge + '</div>' +
+            '<div class="board-card-bottom">' +
+              '<span>权重 <span data-f="weight"></span></span>' +
+              '<select class="board-progress-select">' +
+                '<option value="0">未开始</option><option value="0.5">进行中</option><option value="1">已完成</option>' +
+              '</select>' +
+            '</div></div>';
+        }
+        function fillCards(container) {
+          container.querySelectorAll('.board-card').forEach(function (card) {
+            const t = App.state.tasks.find(function (x) { return x.id === card.dataset.id; });
+            if (!t) return;
+            card.querySelector('[data-f="name"]').textContent = t.name;
+            card.querySelector('[data-f="owner"]').textContent = t.owner || '未分配';
+            card.querySelector('[data-f="due"]').textContent = t.due || '—';
+            card.querySelector('[data-f="weight"]').textContent = t.weight;
+            card.querySelector('.board-progress-select').value = String(t.progress);
+          });
+        }
+
+        if (App.boardView === 'member') {
+          const groups = [];
+          App.state.members.forEach(function (m) {
+            groups.push({ name: m, tasks: App.state.tasks.filter(function (t) { return t.owner === m; }) });
+          });
+          const unassigned = App.state.tasks.filter(function (t) { return !t.owner; });
+          if (unassigned.length) groups.push({ name: '未分配', tasks: unassigned });
+          content.innerHTML = groups.map(function (g) {
+            const rate = g.name === '未分配' ? 0 : App.memberRate(g.name);
+            return '<div class="board-group"><div class="board-group-title">' + esc(g.name) +
+              ' <span class="board-group-rate">' + Math.round(rate * 100) + '%</span></div>' +
+              '<div class="board-group-cards">' + g.tasks.map(cardHtml).join('') + '</div></div>';
+          }).join('');
+        } else {
+          const cols = [
+            { key: '0', title: '未开始' },
+            { key: '0.5', title: '进行中' },
+            { key: '1', title: '已完成' }
+          ];
+          content.innerHTML = '<div class="board-cols">' + cols.map(function (c) {
+            const tasks = App.state.tasks.filter(function (t) { return String(t.progress) === c.key; });
+            return '<div class="board-col"><div class="board-col-title">' + c.title +
+              ' <span class="board-col-count">' + tasks.length + '</span></div>' +
+              '<div class="board-col-cards">' + tasks.map(cardHtml).join('') + '</div></div>';
+          }).join('') + '</div>';
+        }
+        fillCards(content);
+      }
+
+      function renderContribution() {
+        const list = document.getElementById('contribution-list');
+        if (!list) return;
+        if (App.state.members.length === 0) {
+          list.innerHTML = '<div class="empty">还没有成员，先到"数据管理"页添加成员。</div>';
+        } else if (App.state.tasks.length === 0) {
+          list.innerHTML = '<div class="empty">还没有任务，创建任务并更新进度后，这里会自动核算贡献度。</div>';
+        } else {
+          const rows = App.contribution();
+          const top3 = { 1: 'r1', 2: 'r2', 3: 'r3' };
+          list.innerHTML = rows.map(function (r) {
+            const pct = Math.round(r.ratio * 100);
+            return '<div class="rank-row">' +
+              '<span class="rank-badge ' + (top3[r.rank] || '') + '">' + r.rank + '</span>' +
+              '<span class="rank-name"></span>' +
+              '<span class="rank-value">贡献值 <span class="rank-value-num"></span></span>' +
+              '<span class="rank-ratio"></span>' +
+              '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '</div>';
+          }).join('');
+          list.querySelectorAll('.rank-row').forEach(function (row, i) {
+            const r = rows[i];
+            row.querySelector('.rank-name').textContent = r.name;
+            row.querySelector('.rank-value-num').textContent = String(r.value);
+            row.querySelector('.rank-ratio').textContent = Math.round(r.ratio * 100) + '%';
+          });
+        }
+        renderContributionDetail();
+      }
+
+      function renderContributionDetail() {
+        const box = document.getElementById('contribution-detail');
+        if (!box) return;
+        if (App.state.tasks.length === 0 || App.state.members.length === 0) {
+          box.innerHTML = '<div class="empty">暂无明细数据。</div>';
+          return;
+        }
+        box.innerHTML = App.state.members.map(function (name) {
+          const tasks = App.state.tasks.filter(function (t) { return t.owner === name; });
+          if (tasks.length === 0) return '';
+          const rows = tasks.map(function (t) {
+            const done = App.taskDone(t);
+            const score = t.weight * done;
+            return '<tr><td></td><td>' + t.weight + '</td><td>' + (App.PROGRESS_TEXT[String(t.progress)] || '未开始') +
+              '</td><td>' + score + '</td></tr>';
+          }).join('');
+          return '<div class="detail-member"><details><summary class="detail-summary">' + name + '（' + tasks.length + ' 个任务）</summary>' +
+            '<table class="detail-table"><thead><tr><th>任务</th><th>权重</th><th>完成度</th><th>分值</th></tr></thead>' +
+            '<tbody>' + rows + '</tbody></table></details></div>';
+        }).join('');
+        // 任务名 textContent 填充，防止注入
+        box.querySelectorAll('.detail-table tbody tr').forEach(function (tr) {
+          const idx = Array.from(tr.parentNode.children).indexOf(tr);
+          const memberEl = tr.closest('.detail-member');
+          const memberName = memberEl.querySelector('.detail-summary').textContent.split('（')[0];
+          const t = App.state.tasks.filter(function (x) { return x.owner === memberName; })[idx];
+          if (t) tr.querySelector('td').textContent = t.name;
+        });
+      }
+
+      function renderOverview() {
+        const nameEl = document.getElementById('ov-project-name');
+        const statsEl = document.getElementById('ov-stats');
+        const numEl = document.getElementById('ov-rate-num');
+        const barEl = document.getElementById('ov-rate-bar');
+        const membersEl = document.getElementById('ov-members');
+        const dueEl = document.getElementById('ov-due');
+        if (!nameEl) return;
+
+        nameEl.textContent = App.state.projectName;
+        const total = App.state.tasks.length;
+        const done = App.state.tasks.filter(function (t) { return App.taskDone(t) === 1; }).length;
+        statsEl.textContent = '成员 ' + App.state.members.length + ' 人 · 任务 ' + total + ' 个 · 已完成 ' + done + ' 个';
+        const rate = App.overallRate();
+        const pct = Math.round(rate * 100);
+        numEl.textContent = pct + '%';
+        barEl.style.width = pct + '%';
+
+        // 成员进度
+        if (App.state.members.length === 0) {
+          membersEl.innerHTML = '<div class="empty">还没有成员，先到"数据管理"页添加成员。</div>';
+        } else {
+          membersEl.innerHTML = App.state.members.map(function (m) {
+            const mr = Math.round(App.memberRate(m) * 100);
+            const doing = App.state.tasks.filter(function (t) { return t.owner === m && App.taskDone(t) === 0.5; }).length;
+            return '<div class="ov-member-row">' +
+              '<span class="ov-member-name" data-m="' + m.replace(/"/g, '&quot;') + '"></span>' +
+              '<div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + mr + '%"></div></div>' +
+              '<span class="ov-member-pct">' + mr + '%</span>' +
+              '<span class="ov-member-doing">进行中 ' + doing + ' 个</span>' +
+            '</div>';
+          }).join('');
+          membersEl.querySelectorAll('.ov-member-name').forEach(function (el) {
+            el.textContent = el.dataset.m;
+          });
+        }
+
+        // 临期提醒：逾期 + ≤3 天
+        const dueTasks = App.state.tasks.filter(function (t) {
+          const st = App.dueStatus(t.due);
+          return st === 'overdue' || st === 'dueSoon';
+        });
+        if (dueTasks.length === 0) {
+          dueEl.innerHTML = '<div class="empty">暂无临期任务，一切正常。</div>';
+        } else {
+          dueEl.innerHTML = dueTasks.map(function (t) {
+            const st = App.dueStatus(t.due);
+            const cls = st === 'overdue' ? 'due-overdue' : 'due-soon';
+            const badge = st === 'overdue' ? '<span class="badge badge-overdue">已逾期</span>'
+              : '<span class="badge badge-duesoon">临期</span>';
+            return '<div class="ov-due-row ' + cls + '">' +
+              '<span class="ov-due-name" data-n="' + t.id + '"></span>' +
+              '<span class="ov-due-meta">责任人：<span data-o="' + t.id + '"></span></span>' +
+              '<span class="ov-due-meta">截止：<span data-d="' + t.id + '"></span></span>' + badge +
+            '</div>';
+          }).join('');
+          dueEl.querySelectorAll('.ov-due-name').forEach(function (el) {
+            const t = App.state.tasks.find(function (x) { return x.id === el.dataset.n; });
+            if (t) el.textContent = t.name;
+          });
+          dueEl.querySelectorAll('[data-o]').forEach(function (el) {
+            const t = App.state.tasks.find(function (x) { return x.id === el.dataset.o; });
+            if (t) el.textContent = t.owner || '未分配';
+          });
+          dueEl.querySelectorAll('[data-d]').forEach(function (el) {
+            const t = App.state.tasks.find(function (x) { return x.id === el.dataset.d; });
+            if (t) el.textContent = t.due || '—';
+          });
+        }
+      }
+
+      function renderAll() {
+        renderOverview();
+        renderSettings();
+        renderTasks();
+        renderBoard();
+        renderContribution();
+      }
+
+      App.renderOverview = renderOverview;
+      App.renderSettings = renderSettings;
+      App.renderTasks = renderTasks;
+      App.renderBoard = renderBoard;
+      App.renderContribution = renderContribution;
+      App.renderAll = renderAll;
+      App.PROGRESS_TEXT = PROGRESS_TEXT;
+      App.boardView = App.boardView || 'status';
+    })();
+
+    // ===== ④ 事件绑定 =====
+    (function () {
+      // 成员管理：添加 / 删除
+      function addMember(name) {
+        const n = String(name == null ? '' : name).trim();
+        if (!n) return { ok: false, message: '姓名不能为空' };
+        if (App.state.members.indexOf(n) !== -1) return { ok: false, message: '该成员已存在' };
+        App.state.members.push(n);
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      function removeMember(name) {
+        const i = App.state.members.indexOf(name);
+        if (i < 0) return { ok: false, message: '成员不存在' };
+        const hasTasks = App.state.tasks.some(function (t) { return t.owner === name; });
+        if (hasTasks) {
+          if (!confirm('删除成员"' + name + '"后，其名下任务将变为"未分配"，确定删除吗？')) return { ok: false, message: '已取消' };
+          App.state.tasks.forEach(function (t) { if (t.owner === name) t.owner = ''; });
+        } else {
+          if (!confirm('确定删除成员"' + name + '"吗？')) return { ok: false, message: '已取消' };
+        }
+        App.state.members.splice(i, 1);
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      App.addMember = addMember;
+      App.removeMember = removeMember;
+
+      // 添加成员按钮
+      const addBtn = document.getElementById('btn-add-member');
+      const nameInput = document.getElementById('member-name-input');
+      if (addBtn) {
+        addBtn.addEventListener('click', function () {
+          const r = addMember(nameInput.value);
+          if (r.ok) nameInput.value = '';
+          const tip = document.getElementById('member-tip');
+          if (tip) tip.textContent = r.ok ? '' : r.message;
+        });
+      }
+      // 删除成员（事件委托）
+      const memberList = document.getElementById('member-list');
+      if (memberList) {
+        memberList.addEventListener('click', function (e) {
+          const btn = e.target.closest ? e.target.closest('.btn-del-member') : null;
+          if (!btn) return;
+          const i = Number(btn.dataset.i);
+          if (i >= 0 && i < App.state.members.length) removeMember(App.state.members[i]);
+        });
+      }
+
+      // 导航切换：显示指定页面，其余隐藏；当前 tab 高亮
+      function showPage(page) {
+        document.querySelectorAll('main .page').forEach(function (p) {
+          p.classList.toggle('active', p.id === 'page-' + page);
+        });
+        document.querySelectorAll('#nav-tabs .tab').forEach(function (t) {
+          t.classList.toggle('active', t.dataset.page === page);
+        });
+      }
+      document.querySelectorAll('#nav-tabs .tab').forEach(function (tab) {
+        tab.addEventListener('click', function () { showPage(tab.dataset.page); });
+      });
+      App.go = showPage;
+      App.showPage = showPage;
+
+      // ===== 任务管理：保存 / 删除 / 弹窗 =====
+      function uid() {
+        return 't' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      }
+
+      function saveTask(id, data) {
+        const name = String(data.name == null ? '' : data.name).trim();
+        if (!name) return { ok: false, message: '任务名称不能为空' };
+        if (!data.owner) return { ok: false, message: '请选择责任人' };
+        const w = Number(data.weight);
+        if (!(w >= 1 && w <= 5)) return { ok: false, message: '权重需为 1–5 的整数' };
+        const p = [0, 0.5, 1].indexOf(Number(data.progress)) !== -1 ? Number(data.progress) : 0;
+        const due = data.due || '';
+        if (id) {
+          const t = App.state.tasks.find(function (x) { return x.id === id; });
+          if (!t) return { ok: false, message: '任务不存在' };
+          t.name = name; t.owner = data.owner; t.due = due; t.weight = w; t.progress = p;
+        } else {
+          App.state.tasks.push({ id: uid(), name: name, owner: data.owner, due: due, weight: w, progress: p });
+        }
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      function deleteTask(id) {
+        const i = App.state.tasks.findIndex(function (x) { return x.id === id; });
+        if (i < 0) return { ok: false, message: '任务不存在' };
+        if (!confirm('确定删除该任务吗？')) return { ok: false, message: '已取消' };
+        App.state.tasks.splice(i, 1);
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      function closeModal() {
+        const root = document.getElementById('modal-root');
+        if (root) root.innerHTML = '';
+      }
+
+      function openTaskModal(id) {
+        const task = id ? App.state.tasks.find(function (x) { return x.id === id; }) : null;
+        if (id && !task) return;
+        const root = document.getElementById('modal-root');
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        const memberOpts = App.state.members.length === 0
+          ? '<option value="">（请先到数据管理页添加成员）</option>'
+          : App.state.members.map(function (m) {
+              return '<option value="' + m.replace(/"/g, '&quot;') + '">' + m + '</option>';
+            }).join('');
+        overlay.innerHTML =
+          '<div class="modal">' +
+            '<div class="modal-title">' + (task ? '编辑任务' : '添加任务') + '</div>' +
+            '<div class="modal-body">' +
+              '<label>任务名称 *<input id="tf-name" type="text" placeholder="例如：完成行业调研"></label>' +
+              '<label>责任人 *<select id="tf-owner">' + memberOpts + '</select></label>' +
+              '<label>截止日期<input id="tf-due" type="date"></label>' +
+              '<label>权重（1–5，越大越重要）*<select id="tf-weight">' +
+                '<option value="1">1 - 轻量</option><option value="2">2</option>' +
+                '<option value="3" selected>3 - 常规</option><option value="4">4</option>' +
+                '<option value="5">5 - 核心</option></select></label>' +
+              '<label>完成度<select id="tf-progress">' +
+                '<option value="0">未开始</option><option value="0.5">进行中</option><option value="1">已完成</option>' +
+              '</select></label>' +
+              '<div class="modal-tip" id="tf-tip"></div>' +
+            '</div>' +
+            '<div class="modal-actions">' +
+              '<button id="modal-cancel" class="btn">取消</button>' +
+              '<button id="modal-save" class="btn primary">保存</button>' +
+            '</div>' +
+          '</div>';
+        root.appendChild(overlay);
+        // 用 DOM API 填充已有值，避免用户输入进入 HTML 属性
+        const fName = overlay.querySelector('#tf-name');
+        const fOwner = overlay.querySelector('#tf-owner');
+        const fDue = overlay.querySelector('#tf-due');
+        const fWeight = overlay.querySelector('#tf-weight');
+        const fProgress = overlay.querySelector('#tf-progress');
+        if (task) {
+          fName.value = task.name;
+          fOwner.value = task.owner;
+          fDue.value = task.due || '';
+          fWeight.value = String(task.weight);
+          fProgress.value = String(task.progress);
+        }
+        overlay.addEventListener('click', function (e) {
+          if (e.target === overlay) closeModal();
+        });
+        overlay.querySelector('#modal-cancel').addEventListener('click', closeModal);
+        overlay.querySelector('#modal-save').addEventListener('click', function () {
+          const r = saveTask(task ? task.id : null, {
+            name: fName.value,
+            owner: fOwner.value,
+            due: fDue.value,
+            weight: fWeight.value,
+            progress: fProgress.value
+          });
+          if (!r.ok) {
+            overlay.querySelector('#tf-tip').textContent = r.message;
+            return;
+          }
+          closeModal();
+        });
+      }
+
+      App.saveTask = saveTask;
+      App.deleteTask = deleteTask;
+      App.openTaskModal = openTaskModal;
+      App.closeModal = closeModal;
+
+      // 新建任务按钮
+      const newBtn = document.getElementById('btn-new-task');
+      if (newBtn) newBtn.addEventListener('click', function () { openTaskModal(null); });
+      // 任务列表：编辑 / 删除（事件委托）
+      const taskList = document.getElementById('task-list');
+      if (taskList) {
+        taskList.addEventListener('click', function (e) {
+          const btn = e.target.closest ? e.target.closest('.btn-edit-task, .btn-del-task') : null;
+          if (!btn) return;
+          const row = btn.closest('.task-row');
+          if (!row) return;
+          const id = row.dataset.id;
+          if (btn.classList.contains('btn-del-task')) deleteTask(id);
+          else openTaskModal(id);
+        });
+      }
+      // 筛选变化
+      ['filter-status', 'filter-owner'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', function () { App.renderTasks(); });
+      });
+      // 看板：视图切换
+      document.querySelectorAll('.view-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          App.boardView = btn.dataset.view;
+          App.renderBoard();
+        });
+      });
+      // 看板：任务卡片完成度下拉即时更新
+      const boardContent = document.getElementById('board-content');
+      if (boardContent) {
+        boardContent.addEventListener('change', function (e) {
+          if (!e.target.classList || !e.target.classList.contains('board-progress-select')) return;
+          const card = e.target.closest('.board-card');
+          if (!card) return;
+          const t = App.state.tasks.find(function (x) { return x.id === card.dataset.id; });
+          if (!t) return;
+          t.progress = Number(e.target.value);
+          App.save();
+          App.renderAll();
+        });
+      }
+      // 贡献度：明细展开/收起
+      const toggleBtn = document.getElementById('btn-toggle-detail');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', function () {
+          const box = document.getElementById('contribution-detail');
+          if (!box) return;
+          const hidden = box.style.display === 'none';
+          box.style.display = hidden ? 'block' : 'none';
+          toggleBtn.textContent = hidden ? '收起明细' : '展开明细';
+        });
+      }
+      // 首页：快捷入口跳转
+      document.querySelectorAll('.quick-actions button').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (btn.dataset.go) App.go(btn.dataset.go);
+        });
+      });
+
+      // ===== 数据管理：项目名 / 导出 / 导入 / 重置 =====
+      function saveProjectName(name) {
+        const n = String(name == null ? '' : name).trim();
+        if (!n) return { ok: false, message: '项目名称不能为空' };
+        App.state.projectName = n;
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      function exportJSON() {
+        return JSON.stringify(App.state, null, 2);
+      }
+
+      function downloadBackup() {
+        try {
+          const blob = new Blob([exportJSON()], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const d = new Date();
+          const dateStr = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+          a.href = url;
+          a.download = (App.state.projectName || '项目') + '-' + dateStr + '.json';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          return { ok: true };
+        } catch (e) {
+          return { ok: false, message: '导出失败：' + e.message };
+        }
+      }
+
+      /** 导入核心逻辑（纯函数，便于测试）：校验 JSON 结构，确认后覆盖 */
+      function importData(rawText) {
+        let data;
+        try {
+          data = JSON.parse(rawText);
+        } catch (e) {
+          return { ok: false, message: '文件格式不正确，无法解析' };
+        }
+        if (!data || typeof data !== 'object' || data.version === undefined) {
+          return { ok: false, message: '文件格式不正确，缺少必要字段' };
+        }
+        if (!Array.isArray(data.members)) data.members = [];
+        if (!Array.isArray(data.tasks)) data.tasks = [];
+        if (!confirm('导入将覆盖当前全部数据，确定继续吗？')) return { ok: false, message: '已取消' };
+        App.state = Object.assign({ version: 1, projectName: '未命名项目', members: [], tasks: [] }, data);
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      function resetData() {
+        if (!confirm('确定清空所有数据吗？此操作不可恢复！')) return { ok: false, message: '已取消' };
+        if (!confirm('再次确认：将清空全部任务与成员，确定继续？')) return { ok: false, message: '已取消' };
+        App.state = { version: 1, projectName: '未命名项目', members: [], tasks: [] };
+        App.save();
+        App.renderAll();
+        return { ok: true };
+      }
+
+      App.saveProjectName = saveProjectName;
+      App.exportJSON = exportJSON;
+      App.downloadBackup = downloadBackup;
+      App.importData = importData;
+      App.resetData = resetData;
+
+      const saveProjBtn = document.getElementById('btn-save-project');
+      if (saveProjBtn) {
+        saveProjBtn.addEventListener('click', function () {
+          const input = document.getElementById('project-name-input');
+          const tip = document.getElementById('project-tip');
+          const r = saveProjectName(input.value);
+          if (tip) tip.textContent = r.ok ? '已保存。' : r.message;
+        });
+      }
+      const exportBtn = document.getElementById('btn-export');
+      if (exportBtn) exportBtn.addEventListener('click', function () { downloadBackup(); });
+      const importBtn = document.getElementById('btn-import');
+      const importFile = document.getElementById('import-file');
+      if (importBtn && importFile) {
+        importBtn.addEventListener('click', function () { importFile.click(); });
+        importFile.addEventListener('change', function () {
+          const file = importFile.files && importFile.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = function () {
+            const tip = document.getElementById('data-tip');
+            const r = importData(String(reader.result));
+            if (tip && !r.ok) tip.textContent = r.message;
+            importFile.value = '';
+          };
+          reader.readAsText(file);
+        });
+      }
+      const resetBtn = document.getElementById('btn-reset');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function () {
+          const tip = document.getElementById('data-tip');
+          const r = resetData();
+          if (tip && !r.ok) tip.textContent = r.message;
+        });
+      }
+    })();
+
+    // ===== ⑤ 初始化 =====
+    App.renderAll();
+    window.App = App;
+  </script>
+</body>
+</html>

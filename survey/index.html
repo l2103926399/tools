@@ -1,0 +1,1971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>问卷数据处理与分析工具</title>
+<style>
+/* ===== 分析控制台主题 ===== */
+:root {
+  --navy: #0b2338;
+  --navy-2: #12314c;
+  --primary: #1d4ed8;
+  --primary-light: #eef4ff;
+  --green: #0f9d76;
+  --green-light: #e7f7f1;
+  --amber: #a16207;
+  --amber-light: #fdf6e7;
+  --teal: #0d9488;
+  --teal-light: #e6f7f5;
+  --gray: #64748b;
+  --border: #dfe7f1;
+  --border-soft: #eef3f9;
+  --danger: #b42318;
+  --danger-light: #fdf1f0;
+  --ink: #0f2742;
+  --paper: #f1f5f9;
+  --surface: #ffffff;
+  --mono: ui-monospace, "SF Mono", Consolas, "Cascadia Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ===== 顶栏 ===== */
+header {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 0 24px;
+  height: 64px;
+  background: var(--navy);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+header .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+header .brand small {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .14em;
+  font-weight: 400;
+  color: rgba(255, 255, 255, .45);
+}
+.brand-mark {
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  background: linear-gradient(140deg, #2dd4bf, #0d9488);
+  box-shadow: 0 2px 10px rgba(45, 212, 191, .35);
+  flex-shrink: 0;
+}
+nav { display: flex; gap: 6px; overflow-x: auto; }
+nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, .62);
+  white-space: nowrap;
+  font-family: inherit;
+  transition: background .15s, color .15s;
+}
+nav button .no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .35);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+nav button:hover { color: #fff; background: rgba(255, 255, 255, .08); }
+nav button.active { color: #5eead4; background: rgba(45, 212, 191, .14); font-weight: 600; }
+nav button.active .no { border-color: #5eead4; color: #5eead4; }
+nav button:disabled { color: rgba(255, 255, 255, .25); cursor: not-allowed; }
+nav button:disabled .no { border-color: rgba(255, 255, 255, .15); }
+.header-meta {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: .12em;
+  color: rgba(255, 255, 255, .38);
+  white-space: nowrap;
+}
+
+/* ===== 主体 ===== */
+main { max-width: 1080px; margin: 0 auto; padding: 30px 24px 96px; }
+
+.page-head { margin: 2px 0 20px; }
+.page-head .kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: var(--teal);
+}
+.page-head h1 { margin: 6px 0 6px; font-size: 26px; letter-spacing: -.3px; }
+.page-head p { margin: 0; color: var(--gray); font-size: 14px; }
+
+/* ===== 卡片 ===== */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 22px;
+  margin-bottom: 16px;
+}
+.card h2 { margin: 0 0 12px; font-size: 15px; font-weight: 650; display: flex; align-items: center; gap: 9px; }
+.card h2::before { content: ""; width: 6px; height: 6px; border-radius: 2px; background: var(--teal); }
+.card h3 { margin: 16px 0 8px; font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.muted { color: var(--gray); font-size: 13px; }
+.small { font-size: 13px; color: #334e68; }
+
+/* ===== 首页 hero ===== */
+.hero {
+  display: grid;
+  grid-template-columns: 1.15fr .85fr;
+  gap: 34px;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 34px 34px 32px;
+  margin-bottom: 18px;
+}
+.hero .kicker {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .2em;
+  color: var(--teal);
+}
+.hero h1 { margin: 10px 0 12px; font-size: 29px; line-height: 1.32; letter-spacing: -.4px; }
+.hero .lede { margin: 0 0 22px; color: var(--gray); font-size: 14.5px; max-width: 48ch; }
+.flow { display: flex; flex-direction: column; }
+.flow-item { display: grid; grid-template-columns: 30px 1fr; gap: 12px; padding: 9px 0; position: relative; }
+.flow-item .n {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--teal-light); color: var(--teal);
+  font-family: var(--mono); font-size: 12px; font-weight: 700;
+  z-index: 1;
+}
+.flow-item:not(:last-child)::after {
+  content: ""; position: absolute; left: 12.5px; top: 40px; bottom: -6px;
+  width: 1px; background: var(--border);
+}
+.flow-item b { display: block; font-size: 13.5px; }
+.flow-item span { color: var(--gray); font-size: 12.5px; }
+
+/* ===== 按钮 ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: background .15s, border-color .15s, transform .05s;
+}
+.btn:hover { border-color: #b9c8da; background: #fafcfe; }
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.btn.primary:hover { background: #1e40af; border-color: #1e40af; }
+.btn.danger { color: var(--danger); border-color: #efc9c5; background: transparent; }
+.btn.danger:hover { background: var(--danger-light); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn.small { padding: 4px 10px; font-size: 12.5px; }
+.btn.lg { height: 42px; padding: 0 20px; font-size: 14.5px; }
+
+/* ===== 表单 ===== */
+label { font-size: 13px; color: #38556e; display: block; margin-bottom: 4px; }
+input[type=number], select {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+  outline: none;
+}
+input[type=number] { width: 96px; font-family: var(--mono); }
+input[type=number]:focus, select:focus { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-light); }
+select { min-width: 180px; cursor: pointer; }
+.field { display: inline-flex; flex-direction: column; margin-right: 20px; margin-bottom: 12px; }
+
+/* ===== 表格 ===== */
+.table-wrap { overflow-x: auto; border: 1px solid var(--border-soft); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { border-bottom: 1px solid var(--border-soft); padding: 8px 10px; text-align: left; white-space: nowrap; }
+th {
+  background: #f4f7fb; color: #2f4a63; font-weight: 600; font-size: 12.5px;
+  position: sticky; top: 0;
+}
+tr:last-child td { border-bottom: none; }
+tr:nth-child(even) td { background: #fbfcfe; }
+td { font-variant-numeric: tabular-nums; }
+
+/* ===== 状态栏 ===== */
+#statusbar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 20;
+  display: flex;
+  gap: 22px;
+  align-items: center;
+  padding: 10px 24px;
+  background: rgba(11, 35, 56, .96);
+  color: rgba(255, 255, 255, .7);
+  font-size: 12.5px;
+  backdrop-filter: blur(6px);
+}
+#statusbar .dot { font-family: var(--mono); font-weight: 700; color: #5eead4; }
+#statusbar .muted { color: rgba(255, 255, 255, .45); font-size: 12px; }
+
+/* ===== 提示 ===== */
+.alert { padding: 10px 14px; border-radius: 9px; font-size: 13px; margin: 10px 0; border: 1px solid transparent; }
+.alert.warn { background: var(--amber-light); border-color: #f0dfb4; color: #6b5526; }
+.alert.info { background: var(--primary-light); border-color: #cfdefb; color: #1d4ed8; }
+.alert.ok { background: var(--green-light); border-color: #bfe8d9; color: #0b6b52; }
+.alert.err { background: var(--danger-light); border-color: #f0c9c4; color: #8c2f24; }
+
+/* ===== 步骤/统计 ===== */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 14px 0 18px; }
+.step { background: #f7fafc; border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px; }
+.step .num { font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--teal); }
+.step p { margin: 6px 0 0; font-size: 12.5px; color: var(--gray); }
+.stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.stat { background: #fbfcfe; border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px; }
+.stat .v { font-family: var(--mono); font-size: 24px; font-weight: 700; color: var(--ink); }
+.stat .k { font-size: 12px; color: var(--gray); }
+
+/* ===== 清洗规则 ===== */
+.rule-card { border: 1px solid var(--border-soft); border-radius: 12px; padding: 14px; margin-bottom: 12px; background: #fcfdff; }
+.rule-card .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; }
+.reason-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.reason-tag { font-size: 12px; padding: 3px 10px; border-radius: 999px; }
+
+/* ===== 图表 ===== */
+.chart-box { margin-top: 14px; overflow-x: auto; border: 1px solid var(--border-soft); border-radius: 12px; padding: 8px; background: #fcfdff; }
+.chart-box svg { min-width: 600px; display: block; }
+
+/* ===== 折叠 ===== */
+details { margin: 6px 0; border-bottom: 1px solid var(--border-soft); padding-bottom: 6px; }
+details:last-child { border-bottom: none; }
+summary { cursor: pointer; font-size: 13px; color: var(--ink); font-weight: 500; padding: 4px 0; }
+summary:hover { color: var(--primary); }
+.hidden { display: none !important; }
+
+/* ===== 拖拽区 ===== */
+#dropzone {
+  border: 1.5px dashed #b9c8da;
+  border-radius: 12px;
+  padding: 38px 20px;
+  text-align: center;
+  color: var(--gray);
+  cursor: pointer;
+  margin: 12px 0;
+  background: #fbfcfe;
+  transition: border-color .15s, background .15s;
+}
+#dropzone:hover, #dropzone.drag { border-color: var(--teal); background: var(--teal-light); color: var(--teal); }
+
+/* ===== 响应式 ===== */
+@media (max-width: 860px) {
+  .hero { grid-template-columns: 1fr; gap: 22px; padding: 24px; }
+  .hero h1 { font-size: 24px; }
+  .header-meta { display: none; }
+  header { gap: 14px; padding: 0 14px; }
+  main { padding: 22px 16px 96px; }
+  .steps, .stat-row { grid-template-columns: 1fr; }
+  .card { padding: 18px; }
+  .page-head h1 { font-size: 22px; }
+}
+
+/* ===== 补充 ===== */
+#dropzone .dz-hint {
+  margin-top: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .08em;
+  color: var(--gray);
+}
+@media (max-width: 620px) {
+  header { height: 56px; gap: 10px; }
+  header .brand small { display: none; }
+  nav button .no { display: none; }
+  nav button { padding: 6px 9px; font-size: 12.5px; }
+  #dropzone { padding: 28px 14px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="brand-mark"></span>
+    <span>问卷数据处理<small>SURVEY CSV TOOLKIT</small></span>
+  </div>
+  <nav id="nav">
+    <button data-page="home" class="active"><span class="no">1</span>首页</button>
+    <button data-page="import"><span class="no">2</span>数据导入</button>
+    <button data-page="clean" disabled><span class="no">3</span>数据清洗</button>
+    <button data-page="analysis" disabled><span class="no">4</span>交叉分析</button>
+    <button data-page="export" disabled><span class="no">5</span>导出</button>
+  </nav>
+  <div class="header-meta">本地运行 · 数据不上传</div>
+</header>
+
+<main>
+  <!-- ============ 首页 ============ -->
+  <section id="page-home">
+    <section class="hero">
+      <div>
+        <div class="kicker">SURVEY · CSV · LOCAL</div>
+        <h1>把问卷星原始数据，<br>变成能写进报告的结果</h1>
+        <p class="lede">导入 CSV，删掉无效答卷，选出交叉维度，导出可直接粘贴的表格与柱状图。全程在浏览器本地完成，数据不上传。</p>
+        <button class="btn primary lg" id="btn-start">开始导入数据 →</button>
+      </div>
+      <div class="flow">
+        <div class="flow-item"><span class="n">1</span><div><b>导入 CSV</b><span>问卷星后台导出的原始答卷</span></div></div>
+        <div class="flow-item"><span class="n">2</span><div><b>清洗无效答卷</b><span>秒答 / 漏答 / 逻辑矛盾 / 异常值</span></div></div>
+        <div class="flow-item"><span class="n">3</span><div><b>交叉分析并导出</b><span>统计表 + 柱状图 + 项目备份</span></div></div>
+      </div>
+    </section>
+
+    <div class="card hidden" id="home-overview">
+      <h2>当前数据状态</h2>
+      <div class="stat-row">
+        <div class="stat"><div class="v" id="ov-raw">-</div><div class="k">原始答卷</div></div>
+        <div class="stat"><div class="v" id="ov-valid">-</div><div class="k">有效答卷</div></div>
+        <div class="stat"><div class="v" id="ov-invalid">-</div><div class="k">无效答卷</div></div>
+      </div>
+      <div class="small" id="ov-steps" style="margin-top:10px;"></div>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn" id="btn-goto-clean">继续清洗</button>
+        <button class="btn" id="btn-goto-analysis">继续分析</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>使用说明</h2>
+      <details>
+        <summary>CSV 格式要求</summary>
+        <p class="small" style="margin-top:8px;">问卷星后台「下载答卷数据」导出的 CSV 文件（UTF-8 编码，含表头）。工具会自动识别单选题、多选题展开列、数值题和答题时长字段。若导出时未勾选「答题时间」，时长清洗规则将不可用。</p>
+      </details>
+      <details>
+        <summary>各清洗规则的含义</summary>
+        <p class="small" style="margin-top:8px;">① 答题时长过短：答卷用时低于设定阈值，视为秒答；② 空答率过高：未作答题目比例达到阈值；③ 逻辑矛盾：同一份答卷在相互关联的题目上出现矛盾作答（如 18 岁以下却选已婚）；④ 异常值：数值题出现明显超出正常范围的数值。</p>
+      </details>
+      <details>
+        <summary>数据安全说明</summary>
+        <p class="small" style="margin-top:8px;">所有数据只保存在本机浏览器中（IndexedDB），刷新页面不丢失；不会上传到任何服务器。清理浏览器站点数据会导致本地项目丢失，请使用「导出」页的项目备份功能妥善保存。</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ 数据导入 ============ -->
+  <section id="page-import" class="hidden">
+    <div class="page-head">
+      <div class="kicker">STEP 01 · IMPORT</div>
+      <h1>导入问卷数据</h1>
+      <p>支持问卷星导出的 CSV；导入前会先识别列类型，单选项可手动调整。</p>
+    </div>
+    <div class="card">
+      <p class="small">选择问卷星导出的 CSV 文件（支持拖拽）。</p>
+      <div id="dropzone">
+        点击选择文件，或将 CSV 文件拖拽到此处
+        <div class="dz-hint">CSV · UTF-8 编码 · 含表头</div>
+      </div>
+      <input type="file" id="file-input" accept=".csv,text/csv" class="hidden">
+      <div id="import-error"></div>
+      <div id="import-preview" class="hidden">
+        <div class="alert info" id="import-summary"></div>
+        <div id="import-warn"></div>
+        <h3>列类型识别（单选题可手动调整）</h3>
+        <div id="col-checkboxes" class="small"></div>
+        <h3 style="margin-top:14px;">数据预览（前 20 行）</h3>
+        <div class="table-wrap" id="preview-table"></div>
+        <div style="margin-top:14px;">
+          <button class="btn primary" id="btn-confirm-import">确认导入</button>
+          <button class="btn" id="btn-cancel-import">取消</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>导入前准备</h2>
+      <div class="steps">
+        <div class="step"><div class="num">01</div><p>问卷星后台「下载答卷数据」导出 CSV，编码选 UTF-8。</p></div>
+        <div class="step"><div class="num">02</div><p>导出时勾选「答题时间」，否则时长清洗规则不可用。</p></div>
+        <div class="step"><div class="num">03</div><p>表头保留原始题目文字即可，工具会自动识别题型。</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 数据清洗 ============ -->
+  <section id="page-clean" class="hidden">
+    <div class="page-head">
+      <div class="kicker">STEP 02 · CLEAN</div>
+      <h1>清洗无效答卷</h1>
+      <p>配置规则后执行；所有规则可随时调整并重跑，结果可复现。</p>
+    </div>
+    <div class="card">
+      <p class="small">配置清洗规则后点击「执行清洗」。所有规则可随时调整并重新执行，结果可复现。</p>
+      <div id="clean-config"></div>
+      <button class="btn primary" id="btn-run-clean">执行清洗</button>
+      <div id="clean-result" class="hidden"></div>
+    </div>
+  </section>
+
+  <!-- ============ 交叉分析 ============ -->
+  <section id="page-analysis" class="hidden">
+    <div class="page-head">
+      <div class="kicker">STEP 03 · CROSSTAB</div>
+      <h1>交叉分析</h1>
+      <p>选两个单选题维度，生成交叉统计表与柱状图。</p>
+    </div>
+    <div class="card">
+      <p class="small">选择两个单选题维度，生成交叉统计表与柱状图。</p>
+      <div id="analysis-config"></div>
+      <div id="analysis-result" class="hidden"></div>
+    </div>
+  </section>
+
+  <!-- ============ 导出 ============ -->
+  <section id="page-export" class="hidden">
+    <div class="page-head">
+      <div class="kicker">STEP 04 · EXPORT</div>
+      <h1>导出结果</h1>
+      <p>导出清洗后数据、交叉表、柱状图，或保存项目备份。</p>
+    </div>
+    <div class="card">
+      <p class="small">导出当前处理结果，可直接用于课程报告；项目备份可迁移到其他电脑。</p>
+      <div id="export-actions"></div>
+      <input type="file" id="restore-file" accept=".json,application/json" class="hidden">
+    </div>
+  </section>
+</main>
+
+<div id="statusbar">
+  <span>原始 <span class="dot" id="st-raw">0</span> 份</span>
+  <span>有效 <span class="dot" id="st-valid">0</span> 份</span>
+  <span>无效 <span class="dot" id="st-invalid">0</span> 份</span>
+  <span id="st-step" class="muted"></span>
+</div>
+
+<script>
+/**
+ * survey-core.js — 问卷数据处理与分析工具 · 核心逻辑
+ * 纯逻辑层：不依赖 DOM / 浏览器 API，可在 Node 中直接加载做单元测试。
+ * 浏览器中通过 <script src> 加载为 window.SurveyCore；Node 中通过 require 加载。
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) {
+    module.exports = factory();
+  } else {
+    root.SurveyCore = factory();
+  }
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  // =====================================================================
+  // CSV 解析
+  // =====================================================================
+
+  /**
+   * 解析 CSV 文本（支持引号转义、字段内逗号/换行、CRLF、UTF-8 BOM）。
+   * @param {string} text 原始 CSV 文本
+   * @returns {{header: string[], rows: string[][]}}
+   */
+  function parseCSV(text) {
+    if (typeof text !== 'string' || text.length === 0) {
+      throw new Error('CSV 内容为空');
+    }
+    // 去掉 BOM
+    if (text.charCodeAt(0) === 0xfeff) {
+      text = text.slice(1);
+    }
+    var rows = [];
+    var field = '';
+    var row = [];
+    var inQuotes = false;
+    var i = 0;
+    var len = text.length;
+
+    while (i < len) {
+      var ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') {
+            field += '"';
+            i += 2;
+            continue;
+          }
+          inQuotes = false;
+          i += 1;
+          continue;
+        }
+        field += ch;
+        i += 1;
+        continue;
+      }
+      if (ch === '"') {
+        inQuotes = true;
+        i += 1;
+        continue;
+      }
+      if (ch === ',') {
+        row.push(field);
+        field = '';
+        i += 1;
+        continue;
+      }
+      if (ch === '\n') {
+        row.push(field);
+        field = '';
+        rows.push(row);
+        row = [];
+        i += 1;
+        continue;
+      }
+      if (ch === '\r') {
+        // CRLF 或孤立 CR 都按换行处理；跳过紧随其后的 \n
+        row.push(field);
+        field = '';
+        rows.push(row);
+        row = [];
+        i += 1;
+        if (text[i] === '\n') {
+          i += 1;
+        }
+        continue;
+      }
+      field += ch;
+      i += 1;
+    }
+    // 末尾字段
+    if (field.length > 0 || row.length > 0) {
+      row.push(field);
+      rows.push(row);
+    }
+    // 去掉末尾全空行
+    while (rows.length > 0) {
+      var last = rows[rows.length - 1];
+      if (last.length === 1 && last[0].trim() === '') {
+        rows.pop();
+      } else {
+        break;
+      }
+    }
+    if (rows.length === 0) {
+      throw new Error('CSV 中没有有效数据');
+    }
+    var header = rows[0].map(function (h) { return String(h).trim(); });
+    var dataRows = rows.slice(1);
+    // 校验列数一致
+    var n = header.length;
+    if (n === 0) {
+      throw new Error('CSV 表头为空');
+    }
+    for (var j = 0; j < dataRows.length; j++) {
+      if (dataRows[j].length !== n) {
+        throw new Error(
+          '第 ' + (j + 2) + ' 行列数（' + dataRows[j].length + '）与表头列数（' + n + '）不一致'
+        );
+      }
+    }
+    return { header: header, rows: dataRows };
+  }
+
+  // =====================================================================
+  // 列类型分类
+  // =====================================================================
+
+  /**
+   * 识别各列类型。
+   * @param {string[]} header 表头
+   * @param {string[][]} rows 数据行
+   * @returns {{
+   *   durationCol: number|null, submittedAtCol: number|null,
+   *   multiChoiceCols: number[], multiGroups: {name:string, cols:number[]}[],
+   *   numericCols: number[], singleChoiceCols: number[], otherCols: number[]
+   * }}
+   */
+  function classifyColumns(header, rows) {
+    var n = header.length;
+    var durationCol = null;
+    var submittedAtCol = null;
+    var multiChoiceCols = [];
+    var numericCols = [];
+    var singleChoiceCols = [];
+    var otherCols = [];
+
+    var durationRe = /用时|答题时间|答题时长|时长|duration/i;
+    var submittedRe = /提交.*时间|提交时间|submit/i;
+    var idNameRe = /^序号$|^编号$|^学号$|^id$/i;
+
+    // 第一遍：时长列、提交时间列、多选列
+    for (var i = 0; i < n; i++) {
+      var name = header[i];
+      if (durationCol === null && durationRe.test(name)) {
+        durationCol = i;
+        continue;
+      }
+      if (submittedAtCol === null && submittedRe.test(name)) {
+        submittedAtCol = i;
+        continue;
+      }
+      if (name.indexOf('[') >= 0) {
+        multiChoiceCols.push(i);
+        continue;
+      }
+    }
+
+    // 多选列归组（列名去掉 [..] 后缀为组名）
+    var multiGroups = [];
+    var groupMap = {};
+    multiChoiceCols.forEach(function (ci) {
+      var gname = header[ci].replace(/\s*\[.*$/, '').trim();
+      if (!groupMap.hasOwnProperty(gname)) {
+        groupMap[gname] = { name: gname, cols: [] };
+        multiGroups.push(groupMap[gname]);
+      }
+      groupMap[gname].cols.push(ci);
+    });
+
+    // 第二遍：其余列 → 数值列 / 单选题列 / 其他列
+    for (var k = 0; k < n; k++) {
+      if (k === durationCol || k === submittedAtCol || multiChoiceCols.indexOf(k) >= 0) {
+        continue;
+      }
+      var colName = header[k];
+      // ID 类列（序号/编号/学号/id）直接归入其他列
+      if (idNameRe.test(colName)) {
+        otherCols.push(k);
+        continue;
+      }
+      var values = [];
+      for (var r = 0; r < rows.length; r++) {
+        var v = String(rows[r][k] == null ? '' : rows[r][k]).trim();
+        if (v !== '') {
+          values.push(v);
+        }
+      }
+      if (values.length === 0) {
+        otherCols.push(k);
+        continue;
+      }
+      // 数值列：非空值中可完整解析为数字的比例 >= 80%，且列名不像 ID
+      var numCount = 0;
+      values.forEach(function (v) {
+        if (v !== '' && isFinite(Number(v)) && String(Number(v)) !== '') {
+          numCount++;
+        }
+      });
+      var numericRatio = numCount / values.length;
+      if (numericRatio >= 0.8 && !idNameRe.test(colName)) {
+        // 排除时长列/时间列误判（值形如 "2分15秒" 的 Number() 为 NaN，自然不进入）
+        numericCols.push(k);
+        continue;
+      }
+      // 单选题列：唯一值 2~20，且所有非空值长度 <= 10（问卷星选项通常很短，
+      // 用长度阈值排除开放填空/建议题的长文本）
+      var uniq = [];
+      var uniqMap = {};
+      var allShort = true;
+      values.forEach(function (v) {
+        if (!uniqMap.hasOwnProperty(v)) {
+          uniqMap[v] = true;
+          uniq.push(v);
+        }
+        if (v.length > 10) {
+          allShort = false;
+        }
+      });
+      if (uniq.length >= 2 && uniq.length <= 20 && allShort) {
+        singleChoiceCols.push(k);
+        continue;
+      }
+      otherCols.push(k);
+    }
+
+    return {
+      durationCol: durationCol,
+      submittedAtCol: submittedAtCol,
+      multiChoiceCols: multiChoiceCols,
+      multiGroups: multiGroups,
+      numericCols: numericCols,
+      singleChoiceCols: singleChoiceCols,
+      otherCols: otherCols,
+    };
+  }
+
+  // =====================================================================
+  // 答题时长解析
+  // =====================================================================
+
+  /**
+   * 将问卷星时长文本解析为秒数。
+   * 支持："83秒"、"2分15秒"、"135"、"135秒"、"1分5秒"。
+   * 无法解析返回 null。
+   * @param {string} str
+   * @returns {number|null}
+   */
+  function parseDuration(str) {
+    if (str == null) return null;
+    var s = String(str).trim();
+    if (s === '') return null;
+    if (/^\d+$/.test(s)) return Number(s);
+    var m = s.match(/^(\d+)\s*分\s*(\d+)?\s*秒$/);
+    if (m) {
+      return Number(m[1]) * 60 + Number(m[2] || 0);
+    }
+    m = s.match(/^(\d+)\s*秒$/);
+    if (m) return Number(m[1]);
+    return null;
+  }
+
+  // =====================================================================
+  // 数据清洗引擎
+  // =====================================================================
+
+  /**
+   * 计算升序数组的百分位数（线性插值）。
+   * @param {number[]} sorted 已升序排列的数组
+   * @param {number} p 0~1 之间
+   */
+  function percentile(sorted, p) {
+    if (sorted.length === 0) return NaN;
+    var pos = (sorted.length - 1) * p;
+    var base = Math.floor(pos);
+    var rest = pos - base;
+    if (sorted[base + 1] !== undefined) {
+      return sorted[base] + rest * (sorted[base + 1] - sorted[base]);
+    }
+    return sorted[base];
+  }
+
+  /**
+   * 清洗引擎：逐行判定有效性并记录全部命中原因。
+   * 规则顺序：答题时长过短 → 空答率过高 → 逻辑矛盾 → 异常值。
+   * 空答口径：按"题"计，分母 = 单选列数 + 多选组数；多选组所有子列全空才算空答 1 题。
+   * @param {string[][]} rows 原始数据行
+   * @param {object} columns classifyColumns 的结果
+   * @param {{
+   *   durationEnabled: boolean, durationSec: number,
+   *   blankRatePct: number,
+   *   contradictionRules: {a:number, aVal:string, b:number, bForbidden:string[]}[],
+   *   outlierEnabled: boolean
+   * }} config
+   * @returns {{rows:{valid:boolean,reasons:string[]}[], stats:object}}
+   */
+  function runCleaning(rows, columns, config) {
+    config = config || {};
+    var durationEnabled = !!config.durationEnabled && columns.durationCol !== null;
+    var durationSec = Number(config.durationSec);
+    if (!isFinite(durationSec) || durationSec < 0) durationSec = 60;
+    var blankRatePct = Number(config.blankRatePct);
+    if (!isFinite(blankRatePct)) blankRatePct = 50;
+    var outlierEnabled = !!config.outlierEnabled;
+    var rules = config.contradictionRules || [];
+
+    // 异常值界值（IQR 方法）
+    var outlierBounds = [];
+    if (outlierEnabled) {
+      columns.numericCols.forEach(function (ci) {
+        var vals = [];
+        for (var i = 0; i < rows.length; i++) {
+          var v = rows[i][ci];
+          var s = v == null ? '' : String(v).trim();
+          if (s === '') continue;
+          var num = Number(s);
+          if (isFinite(num)) vals.push(num);
+        }
+        if (vals.length >= 4) {
+          vals.sort(function (a, b) { return a - b; });
+          var q1 = percentile(vals, 0.25);
+          var q3 = percentile(vals, 0.75);
+          var iqr = q3 - q1;
+          outlierBounds.push({ col: ci, lo: q1 - 1.5 * iqr, hi: q3 + 1.5 * iqr });
+        }
+      });
+    }
+
+    var total = rows.length;
+    var perRow = new Array(total);
+    var reasonCounts = {};
+    var validCount = 0;
+
+    // 空答统计的"题"数分母
+    var blankDenom = columns.singleChoiceCols.length + columns.multiGroups.length;
+
+    for (var r = 0; r < total; r++) {
+      var reasons = [];
+      var row = rows[r];
+
+      // 1. 答题时长过短
+      if (durationEnabled && columns.durationCol !== null) {
+        var sec = parseDuration(row[columns.durationCol]);
+        if (sec !== null && sec < durationSec) reasons.push('答题时长过短');
+      }
+
+      // 2. 空答率过高
+      if (blankDenom > 0) {
+        var blankCount = 0;
+        columns.singleChoiceCols.forEach(function (ci) {
+          var v = row[ci] == null ? '' : String(row[ci]).trim();
+          if (v === '') blankCount++;
+        });
+        columns.multiGroups.forEach(function (g) {
+          var allEmpty = g.cols.every(function (ci) {
+            return (row[ci] == null ? '' : String(row[ci]).trim()) === '';
+          });
+          if (allEmpty) blankCount++;
+        });
+        if (blankCount / blankDenom >= blankRatePct / 100) reasons.push('空答率过高');
+      }
+
+      // 3. 逻辑矛盾
+      rules.forEach(function (rule) {
+        if (!rule || rule.a == null || rule.b == null) return;
+        var aVal = (row[rule.a] == null ? '' : String(row[rule.a])).trim();
+        if (aVal === rule.aVal) {
+          var bVal = (row[rule.b] == null ? '' : String(row[rule.b])).trim();
+          if (rule.bForbidden.indexOf(bVal) >= 0) reasons.push('逻辑矛盾');
+        }
+      });
+
+      // 4. 异常值
+      if (outlierEnabled) {
+        outlierBounds.forEach(function (b) {
+          var v = row[b.col] == null ? '' : String(row[b.col]).trim();
+          if (v === '') return;
+          var num = Number(v);
+          if (!isFinite(num)) return;
+          if (num < b.lo || num > b.hi) reasons.push('异常值');
+        });
+      }
+
+      var valid = reasons.length === 0;
+      if (valid) validCount++;
+      reasons.forEach(function (rs) { reasonCounts[rs] = (reasonCounts[rs] || 0) + 1; });
+      perRow[r] = { valid: valid, reasons: reasons };
+    }
+
+    return {
+      rows: perRow,
+      stats: {
+        total: total,
+        validCount: validCount,
+        invalidCount: total - validCount,
+        reasonCounts: reasonCounts,
+      },
+    };
+  }
+
+  // =====================================================================
+  // 交叉分析
+  // =====================================================================
+
+  /** 取某列的非空唯一值（保持首次出现顺序） */
+  function uniqueValues(rows, colIdx) {
+    var seen = {};
+    var arr = [];
+    for (var i = 0; i < rows.length; i++) {
+      var v = (rows[i][colIdx] == null ? '' : String(rows[i][colIdx])).trim();
+      if (v !== '' && !seen.hasOwnProperty(v)) {
+        seen[v] = true;
+        arr.push(v);
+      }
+    }
+    return arr;
+  }
+
+  /**
+   * 构建交叉表（基于清洗后的有效行）。
+   * @param {number} rowCol 行维度列索引
+   * @param {number} colCol 列维度列索引
+   * @param {string[][]} validRows 有效答卷行
+   * @returns {{
+   *   rowVals:string[], colVals:string[],
+   *   freq:number[][], rowPct:number[][],
+   *   rowTotals:number[], colTotals:number[], total:number
+   * }}
+   */
+  function buildCrossTable(rowCol, colCol, validRows) {
+    var rowVals = uniqueValues(validRows, rowCol);
+    var colVals = uniqueValues(validRows, colCol);
+    var freq = rowVals.map(function () { return colVals.map(function () { return 0; }); });
+    var rowTotals = rowVals.map(function () { return 0; });
+    var colTotals = colVals.map(function () { return 0; });
+
+    validRows.forEach(function (r) {
+      var rv = (r[rowCol] == null ? '' : String(r[rowCol])).trim();
+      var cv = (r[colCol] == null ? '' : String(r[colCol])).trim();
+      if (rv === '' || cv === '') return;
+      var ri = rowVals.indexOf(rv);
+      var ci = colVals.indexOf(cv);
+      if (ri < 0 || ci < 0) return;
+      freq[ri][ci] += 1;
+      rowTotals[ri] += 1;
+      colTotals[ci] += 1;
+    });
+
+    var rowPct = freq.map(function (row, ri) {
+      return row.map(function (v) { return rowTotals[ri] > 0 ? v / rowTotals[ri] : 0; });
+    });
+
+    return {
+      rowVals: rowVals,
+      colVals: colVals,
+      freq: freq,
+      rowPct: rowPct,
+      rowTotals: rowTotals,
+      colTotals: colTotals,
+      total: validRows.length,
+    };
+  }
+
+  /**
+   * 生成分组柱状图 SVG 字符串（零依赖，Node 可测）。
+   * @param {object} data buildCrossTable 的结果
+   * @param {object} opts { width, height, colors[] }
+   * @returns {string} SVG 字符串
+   */
+  function renderBarChartSVG(data, opts) {
+    opts = opts || {};
+    var W = opts.width || 860;
+    var H = opts.height || 420;
+    var colors = opts.colors || ['#1d6fb8', '#1f8a4c', '#b07d1d', '#0f766e', '#8e44ad', '#c0392b', '#16a085', '#d35400'];
+
+    var margin = { top: 44, right: 20, bottom: 84, left: 56 };
+    var plotW = W - margin.left - margin.right;
+    var plotH = H - margin.top - margin.bottom;
+
+    var rowVals = data.rowVals;
+    var colVals = data.colVals;
+    var freq = data.freq;
+
+    var maxVal = 1;
+    freq.forEach(function (row) { row.forEach(function (v) { if (v > maxVal) maxVal = v; }); });
+    // 整数刻度上限
+    var yMax = Math.max(1, Math.ceil(maxVal / 5) * 5);
+
+    var parts = [];
+    parts.push('<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" font-family="Microsoft YaHei,Arial,sans-serif">');
+
+    // 标题
+    parts.push('<text x="' + (margin.left + plotW / 2) + '" y="24" text-anchor="middle" font-size="15" font-weight="bold" fill="#1c3d5a">交叉分析柱状图（频数）</text>');
+
+    // 图例
+    colVals.forEach(function (cv, ci) {
+      var x = margin.left + ci * 130;
+      parts.push('<rect x="' + x + '" y="32" width="12" height="12" fill="' + colors[ci % colors.length] + '"/>');
+      parts.push('<text x="' + (x + 17) + '" y="42" font-size="12" fill="#38556e">' + escXml(cv) + '</text>');
+    });
+
+    // 网格与 y 轴
+    var ticks = 5;
+    for (var t = 0; t <= ticks; t++) {
+      var yv = (yMax / ticks) * t;
+      var y = margin.top + plotH - (yv / yMax) * plotH;
+      parts.push('<line x1="' + margin.left + '" y1="' + y + '" x2="' + (margin.left + plotW) + '" y2="' + y + '" stroke="#e3ecf5" stroke-width="1"/>');
+      parts.push('<text x="' + (margin.left - 8) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#66788c">' + yv + '</text>');
+    }
+
+    // 柱
+    var groupW = rowVals.length > 0 ? plotW / rowVals.length : plotW;
+    var barW = colVals.length > 0 ? (groupW * 0.8) / colVals.length : 0;
+    for (var ri = 0; ri < rowVals.length; ri++) {
+      for (var ci2 = 0; ci2 < colVals.length; ci2++) {
+        var v = freq[ri][ci2];
+        var barH = (v / yMax) * plotH;
+        var bx = margin.left + ri * groupW + (groupW - barW * colVals.length) / 2 + ci2 * barW;
+        var by = margin.top + plotH - barH;
+        parts.push('<rect x="' + bx.toFixed(1) + '" y="' + by.toFixed(1) + '" width="' + Math.max(barW - 2, 1).toFixed(1) + '" height="' + Math.max(barH, 0).toFixed(1) + '" fill="' + colors[ci2 % colors.length] + '"/>');
+        if (v > 0) {
+          parts.push('<text x="' + (bx + barW / 2).toFixed(1) + '" y="' + (by - 4).toFixed(1) + '" text-anchor="middle" font-size="11" fill="#38556e">' + v + '</text>');
+        }
+      }
+      // x 轴标签
+      var lx = margin.left + ri * groupW + groupW / 2;
+      parts.push('<text x="' + lx.toFixed(1) + '" y="' + (H - margin.bottom + 24) + '" text-anchor="middle" font-size="12" fill="#1c3d5a">' + escXml(rowVals[ri]) + '</text>');
+      // x 轴线
+      parts.push('<line x1="' + margin.left + '" y1="' + (margin.top + plotH) + '" x2="' + (margin.left + plotW) + '" y2="' + (margin.top + plotH) + '" stroke="#66788c" stroke-width="1"/>');
+    }
+
+    // x 轴说明：行维度
+    parts.push('<text x="' + (margin.left + plotW / 2) + '" y="' + (H - margin.bottom + 48) + '" text-anchor="middle" font-size="12" fill="#66788c">行维度（分组）</text>');
+
+    parts.push('</svg>');
+    return parts.join('');
+  }
+
+  function escXml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // =====================================================================
+  // 导出与备份
+  // =====================================================================
+
+  /** CSV 字段转义 */
+  function csvEscape(v) {
+    var s = String(v == null ? '' : v);
+    if (/[",\r\n]/.test(s)) {
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
+  }
+
+  /**
+   * 生成 CSV 文本（带 BOM，便于 Excel 直接打开中文）。
+   * @param {string[]} header
+   * @param {string[][]} rows
+   * @returns {string}
+   */
+  function rowsToCSV(header, rows) {
+    var lines = [header.map(csvEscape).join(',')];
+    rows.forEach(function (r) {
+      lines.push(r.map(csvEscape).join(','));
+    });
+    return '\ufeff' + lines.join('\r\n');
+  }
+
+  /** 取清洗后的有效行（与 cleanResult.rows 一一对应） */
+  function filterValidRows(rows, cleanResult) {
+    return rows.filter(function (_, i) {
+      return cleanResult.rows[i] && cleanResult.rows[i].valid;
+    });
+  }
+
+  /**
+   * 生成交叉表 CSV 文本。
+   * @param {object} analysis state.analysis（含 result 与 rowCol/colCol）
+   * @param {string[]} header 表头
+   * @returns {string}
+   */
+  function crossTableToCSV(analysis, header) {
+    var t = analysis.result;
+    var lines = [];
+    var first = [header[analysis.rowCol] + '\\' + header[analysis.colCol]];
+    t.colVals.forEach(function (cv) { first.push(cv); });
+    first.push('合计');
+    lines.push(first.map(csvEscape).join(','));
+    t.rowVals.forEach(function (rv, ri) {
+      var line = [rv];
+      t.freq[ri].forEach(function (v) { line.push(v); });
+      line.push(t.rowTotals[ri]);
+      lines.push(line.map(csvEscape).join(','));
+    });
+    var last = ['合计'];
+    t.colTotals.forEach(function (v) { last.push(v); });
+    last.push(t.total);
+    lines.push(last.map(csvEscape).join(','));
+    return '\ufeff' + lines.join('\r\n');
+  }
+
+  /** 构建项目备份对象 */
+  function buildBackup(dataset, appState, cleanResult) {
+    return {
+      version: '1.0',
+      date: new Date().toISOString(),
+      appState: appState,
+      dataset: dataset,
+      cleanResult: cleanResult,
+    };
+  }
+
+  /**
+   * 解析并校验备份文本。
+   * @param {string} text
+   * @returns {object} 校验后的备份对象
+   */
+  function parseBackup(text) {
+    var obj;
+    try {
+      obj = JSON.parse(text);
+    } catch (e) {
+      throw new Error('备份文件不是有效的 JSON');
+    }
+    if (!obj || obj.version !== '1.0') {
+      throw new Error('备份文件版本不支持或已损坏');
+    }
+    if (!obj.dataset || !Array.isArray(obj.dataset.header) || !Array.isArray(obj.dataset.rows)) {
+      throw new Error('备份文件缺少数据集');
+    }
+    if (!obj.appState || !obj.appState.step) {
+      throw new Error('备份文件缺少状态信息');
+    }
+    if (obj.cleanResult !== null && obj.cleanResult !== undefined &&
+        (!obj.cleanResult.rows || !obj.cleanResult.stats)) {
+      throw new Error('备份文件中的清洗结果不完整');
+    }
+    return obj;
+  }
+
+  return {
+    parseCSV: parseCSV,
+    classifyColumns: classifyColumns,
+    parseDuration: parseDuration,
+    runCleaning: runCleaning,
+    percentile: percentile,
+    uniqueValues: uniqueValues,
+    buildCrossTable: buildCrossTable,
+    renderBarChartSVG: renderBarChartSVG,
+    csvEscape: csvEscape,
+    rowsToCSV: rowsToCSV,
+    filterValidRows: filterValidRows,
+    crossTableToCSV: crossTableToCSV,
+    buildBackup: buildBackup,
+    parseBackup: parseBackup,
+    version: '0.4.0',
+  };
+});
+
+</script>
+<script>
+'use strict';
+/* =====================================================================
+ * 状态管理
+ * ===================================================================== */
+let state = {
+  header: null,
+  rows: null,
+  columns: null,
+  step: { imported: false, cleaned: false, analyzed: false },
+  cleanConfig: {
+    durationEnabled: true, durationSec: 60,
+    blankRatePct: 50,
+    contradictionRules: [],   // [{a: colIdx, aVal: '选项', b: colIdx, bForbidden: ['选项']}]
+    outlierEnabled: true,
+  },
+  cleanResult: null,
+  analysis: { rowCol: null, colCol: null, result: null },
+};
+
+/* =====================================================================
+ * IndexedDB 存储封装
+ * ===================================================================== */
+const storage = {
+  dbName: 'surveyToolDB',
+  open() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(this.dbName, 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        ['appState', 'dataset', 'cleanResult'].forEach((s) => {
+          if (!db.objectStoreNames.contains(s)) db.createObjectStore(s);
+        });
+      };
+      req.onsuccess = (e) => resolve(e.target.result);
+      req.onerror = () => reject(req.error || new Error('无法打开本地存储'));
+    });
+  },
+  async save(store, key, value) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, 'readwrite');
+      tx.objectStore(store).put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+  async load(store, key) {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const req = db.transaction(store, 'readonly').objectStore(store).get(key);
+      req.onsuccess = () => resolve(req.result === undefined ? null : req.result);
+      req.onerror = () => reject(req.error);
+    });
+  },
+  async clearAll() {
+    const db = await this.open();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(['appState', 'dataset', 'cleanResult'], 'readwrite');
+      tx.objectStore('appState').clear();
+      tx.objectStore('dataset').clear();
+      tx.objectStore('cleanResult').clear();
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  },
+};
+
+/* =====================================================================
+ * 工具函数
+ * ===================================================================== */
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html !== undefined) e.innerHTML = html;
+  return e;
+}
+
+/* =====================================================================
+ * 导航与状态栏
+ * ===================================================================== */
+const PAGES = ['home', 'import', 'clean', 'analysis', 'export'];
+
+function showPage(name) {
+  PAGES.forEach((p) => {
+    $('page-' + p).classList.toggle('hidden', p !== name);
+  });
+  document.querySelectorAll('#nav button').forEach((b) => {
+    b.classList.toggle('active', b.dataset.page === name);
+  });
+  window.scrollTo(0, 0);
+  if (name === 'export') renderExportActions();
+  if (name === 'analysis') renderAnalysisConfig();
+}
+
+function refreshNav() {
+  const hasData = state.step.imported;
+  const cleaned = state.step.cleaned;
+  const navBtns = document.querySelectorAll('#nav button');
+  navBtns.forEach((b) => {
+    const p = b.dataset.page;
+    if (p === 'home' || p === 'import' || p === 'export') { b.disabled = false; return; }
+    if (p === 'clean') { b.disabled = !hasData; return; }
+    if (p === 'analysis') { b.disabled = !cleaned; return; }
+  });
+}
+
+function renderStatusBar() {
+  const raw = state.rows ? state.rows.length : 0;
+  const cr = state.cleanResult;
+  const valid = cr ? cr.stats.validCount : 0;
+  const invalid = cr ? cr.stats.invalidCount : 0;
+  $('st-raw').textContent = raw;
+  $('st-valid').textContent = valid;
+  $('st-invalid').textContent = invalid;
+  const step = [];
+  if (state.step.imported) step.push('已导入');
+  if (state.step.cleaned) step.push('已清洗');
+  if (state.step.analyzed) step.push('已分析');
+  $('st-step').textContent = step.length ? '当前：' + step.join(' · ') : '尚未导入数据';
+}
+
+/* =====================================================================
+ * 首页
+ * ===================================================================== */
+function renderHome() {
+  const hasData = state.step.imported;
+  $('home-overview').classList.toggle('hidden', !hasData);
+  if (hasData) {
+    $('ov-raw').textContent = state.rows.length;
+    const cr = state.cleanResult;
+    $('ov-valid').textContent = cr ? cr.stats.validCount : '-';
+    $('ov-invalid').textContent = cr ? cr.stats.invalidCount : '-';
+    $('ov-steps').innerHTML =
+      '已完成：' + (state.step.imported ? '导入 ✓ ' : '') +
+      (state.step.cleaned ? '清洗 ✓ ' : '') +
+      (state.step.analyzed ? '分析 ✓ ' : '');
+  }
+}
+
+/* =====================================================================
+ * 数据导入页
+ * ===================================================================== */
+let pendingImport = null; // {header, rows, columns, userSingle}
+
+function readFileText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let text = String(reader.result || '');
+      if (text.indexOf('\uFFFD') >= 0) {
+        // UTF-8 解码出现替换字符，尝试 GBK
+        try {
+          text = new TextDecoder('gbk').decode(file);
+        } catch (e) { /* 保持原文本 */ }
+      }
+      resolve(text);
+    };
+    reader.onerror = () => reject(new Error('读取文件失败'));
+    reader.readAsText(file, 'utf-8');
+  });
+}
+
+function renderColCheckboxes(header, columns, userSingle) {
+  const box = $('col-checkboxes');
+  box.innerHTML = '';
+  const singleSet = new Set(userSingle);
+  columns.singleChoiceCols.forEach((ci) => {
+    const label = el('label', '', '<input type="checkbox" data-col="' + ci + '"' +
+      (singleSet.has(ci) ? ' checked' : '') + '> ' + esc(header[ci]) + '（单选题）');
+    box.appendChild(label);
+  });
+  if (columns.singleChoiceCols.length === 0) {
+    box.appendChild(el('div', 'alert warn', '未识别到单选题列，交叉分析将不可用。'));
+  }
+}
+
+function showImportPreview(header, rows, columns, userSingle) {
+  $('import-preview').classList.remove('hidden');
+  $('import-summary').textContent =
+    '共 ' + rows.length + ' 份答卷，' + header.length + ' 个字段；识别到单选题 ' +
+    columns.singleChoiceCols.length + ' 个，数值题 ' + columns.numericCols.length + ' 个，多选题组 ' +
+    columns.multiGroups.length + ' 个。';
+  $('import-warn').innerHTML = '';
+  if (columns.durationCol === null) {
+    $('import-warn').innerHTML = '<div class="alert warn">未识别到答题时长字段，时长清洗规则将不可用（可在问卷星导出设置中勾选「答题时间」）。</div>';
+  }
+  renderColCheckboxes(header, columns, userSingle);
+  // 预览表：前 20 行
+  const table = el('table');
+  const thead = el('thead');
+  const trh = el('tr');
+  header.forEach((h) => trh.appendChild(el('th', '', esc(h))));
+  thead.appendChild(trh);
+  table.appendChild(thead);
+  const tbody = el('tbody');
+  rows.slice(0, 20).forEach((r) => {
+    const tr = el('tr');
+    r.forEach((v) => tr.appendChild(el('td', '', esc(v))));
+    tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);
+  $('preview-table').innerHTML = '';
+  $('preview-table').appendChild(table);
+}
+
+async function handleFile(file) {
+  $('import-error').innerHTML = '';
+  try {
+    const text = await readFileText(file);
+    const { header, rows } = SurveyCore.parseCSV(text);
+    const columns = SurveyCore.classifyColumns(header, rows);
+    pendingImport = { header, rows, columns, userSingle: columns.singleChoiceCols.slice() };
+    showImportPreview(header, rows, columns, pendingImport.userSingle);
+  } catch (e) {
+    pendingImport = null;
+    $('import-preview').classList.add('hidden');
+    $('import-error').innerHTML = '<div class="alert err">导入失败：' + esc(e.message) + '</div>';
+  }
+}
+
+async function confirmImport() {
+  if (!pendingImport) return;
+  // 收集用户勾选的单选题
+  const checked = [];
+  document.querySelectorAll('#col-checkboxes input[type=checkbox]:checked').forEach((cb) => {
+    checked.push(Number(cb.dataset.col));
+  });
+  pendingImport.columns.singleChoiceCols = checked;
+  state.header = pendingImport.header;
+  state.rows = pendingImport.rows;
+  state.columns = pendingImport.columns;
+  state.step = { imported: true, cleaned: false, analyzed: false };
+  state.cleanResult = null;
+  state.analysis = { rowCol: null, colCol: null, result: null };
+  await storage.save('dataset', 'main', { header: state.header, rows: state.rows, columns: state.columns });
+  await storage.save('appState', 'main', { step: state.step, cleanConfig: state.cleanConfig });
+  await storage.save('cleanResult', 'main', null);
+  pendingImport = null;
+  $('import-preview').classList.add('hidden');
+  refreshNav();
+  renderStatusBar();
+  renderHome();
+  showPage('clean');
+  $('clean-result').classList.add('hidden');
+  $('clean-config').innerHTML = '';
+  renderCleanConfig();
+}
+
+/* =====================================================================
+ * 数据清洗页
+ * ===================================================================== */
+const REASON_TAGS = {
+  '答题时长过短': '时长短',
+  '空答率过高': '空答多',
+  '逻辑矛盾': '逻辑矛盾',
+  '异常值': '异常值',
+};
+
+function renderCleanConfig() {
+  const box = $('clean-config');
+  const cfg = state.cleanConfig;
+  box.innerHTML = '';
+
+  const hasDuration = state.columns && state.columns.durationCol !== null;
+  const singleCols = state.columns.singleChoiceCols;
+
+  // 规则一：答题时长
+  const card1 = el('div', 'rule-card');
+  const h1 = el('div', 'head');
+  h1.appendChild(el('label', '', '<input type="checkbox" id="cfg-dur-on"' + (cfg.durationEnabled && hasDuration ? ' checked' : '') + (hasDuration ? '' : ' disabled') + '> 答题时长阈值'));
+  if (!hasDuration) {
+    h1.appendChild(el('span', 'muted', '（未识别到答题时长字段，规则不可用）'));
+  }
+  const f1 = el('span', 'field', '');
+  f1.appendChild(el('label', '', '时长低于以下秒数视为无效'));
+  f1.appendChild(el('input', '', ''));
+  const inDur = f1.querySelector('input');
+  inDur.type = 'number'; inDur.min = '0'; inDur.id = 'cfg-dur-sec';
+  inDur.value = cfg.durationSec;
+  if (!hasDuration) { inDur.disabled = true; }
+  card1.appendChild(h1); card1.appendChild(f1);
+  box.appendChild(card1);
+
+  // 规则二：空答率
+  const card2 = el('div', 'rule-card');
+  card2.appendChild(el('div', 'head', '<b>空答率阈值</b> <span class="muted">（未作答题目占比达到该值即判无效，按"题"计）</span>'));
+  const f2 = el('span', 'field', '');
+  f2.appendChild(el('label', '', '空答率 ≥（%）'));
+  f2.appendChild(el('input', '', ''));
+  const inBlank = f2.querySelector('input');
+  inBlank.type = 'number'; inBlank.min = '0'; inBlank.max = '100'; inBlank.id = 'cfg-blank';
+  inBlank.value = cfg.blankRatePct;
+  card2.appendChild(f2);
+  box.appendChild(card2);
+
+  // 规则三：逻辑矛盾
+  const card3 = el('div', 'rule-card');
+  const h3 = el('div', 'head', '<b>逻辑矛盾校验</b> <span class="muted">（如：年龄=18岁以下 时，婚姻状况不应=已婚；最多 5 条）</span>');
+  card3.appendChild(h3);
+  const ruleList = el('div', '', '');
+  ruleList.id = 'rule-list';
+  card3.appendChild(ruleList);
+  // 添加规则表单
+  const addForm = el('div', 'small', '');
+  addForm.style.cssText = 'margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;';
+  addForm.appendChild(el('span', '', '<b>添加规则：</b>'));
+  const selA = el('select', '', '');
+  selA.id = 'rule-a';
+  selA.appendChild(el('option', '', '选择 A 题'));
+  singleCols.forEach((ci) => {
+    const o = el('option', '', esc(state.header[ci]));
+    o.value = ci;
+    selA.appendChild(o);
+  });
+  addForm.appendChild(selA);
+  const selAVal = el('select', '', '');
+  selAVal.id = 'rule-a-val';
+  selAVal.appendChild(el('option', '', '选择 A 的选项'));
+  addForm.appendChild(selAVal);
+  addForm.appendChild(el('span', 'muted', '时，'));
+  const selB = el('select', '', '');
+  selB.id = 'rule-b';
+  selB.appendChild(el('option', '', '选择 B 题'));
+  singleCols.forEach((ci) => selB.appendChild((function(){ const o = el('option','',esc(state.header[ci])); o.value = ci; return o; })()));
+  addForm.appendChild(selB);
+  const selBVal = el('select', '', '');
+  selBVal.id = 'rule-b-val';
+  selBVal.appendChild(el('option', '', '不应为'));
+  addForm.appendChild(selBVal);
+  const btnAdd = el('button', 'btn small', '添加');
+  btnAdd.id = 'btn-add-rule';
+  addForm.appendChild(btnAdd);
+  card3.appendChild(addForm);
+  box.appendChild(card3);
+
+  // 规则四：异常值
+  const card4 = el('div', 'rule-card');
+  card4.appendChild(el('div', 'head', '<label><input type="checkbox" id="cfg-outlier"' + (cfg.outlierEnabled ? ' checked' : '') + '> 异常值剔除</label> <span class="muted">（数值题超出 IQR 1.5 倍界值视为异常，默认开启）</span>'));
+  box.appendChild(card4);
+
+  // 事件绑定
+  selA.addEventListener('change', () => fillOptions(selAVal, selA.value, '选择 A 的选项'));
+  selB.addEventListener('change', () => fillOptions(selBVal, selB.value, '不应为'));
+  btnAdd.addEventListener('click', () => {
+    if (selA.value === '' || selAVal.value === '' || selB.value === '' || selBVal.value === '') {
+      alert('请完整选择 A 题、A 选项、B 题与 B 选项');
+      return;
+    }
+    if (state.cleanConfig.contradictionRules.length >= 5) {
+      alert('逻辑矛盾规则最多 5 条');
+      return;
+    }
+    state.cleanConfig.contradictionRules.push({
+      a: Number(selA.value), aVal: selAVal.value,
+      b: Number(selB.value), bForbidden: [selBVal.value],
+    });
+    renderRuleList();
+  });
+
+  renderRuleList();
+}
+
+function fillOptions(selectEl, colIdx, placeholder) {
+  selectEl.innerHTML = '';
+  selectEl.appendChild(el('option', '', placeholder));
+  if (colIdx === '') return;
+  const seen = {};
+  state.rows.forEach((r) => {
+    const v = String(r[Number(colIdx)] == null ? '' : r[Number(colIdx)]).trim();
+    if (v !== '' && !seen[v]) { seen[v] = true; selectEl.appendChild(el('option', '', esc(v))); }
+  });
+}
+
+function renderRuleList() {
+  const list = $('rule-list');
+  if (!list) return;
+  list.innerHTML = '';
+  if (state.cleanConfig.contradictionRules.length === 0) {
+    list.appendChild(el('div', 'muted', '尚未配置矛盾规则。'));
+    return;
+  }
+  state.cleanConfig.contradictionRules.forEach((rule, idx) => {
+    const row = el('div', 'small', '');
+    row.style.cssText = 'margin:4px 0; display:flex; gap:8px; align-items:center;';
+    row.appendChild(el('span', '', '当 ' + esc(state.header[rule.a]) + ' = 「' + esc(rule.aVal) + '」 时，' +
+      esc(state.header[rule.b]) + ' 不应为 「' + esc(rule.bForbidden.join('、')) + '」'));
+    const btn = el('button', 'btn small danger', '删除');
+    btn.addEventListener('click', () => {
+      state.cleanConfig.contradictionRules.splice(idx, 1);
+      renderRuleList();
+    });
+    row.appendChild(btn);
+    list.appendChild(row);
+  });
+}
+
+function collectCleanConfig() {
+  const cfg = state.cleanConfig;
+  const durOn = $('cfg-dur-on');
+  if (durOn) cfg.durationEnabled = durOn.checked;
+  const durSec = $('cfg-dur-sec');
+  if (durSec && durSec.value !== '') cfg.durationSec = Number(durSec.value);
+  const blank = $('cfg-blank');
+  if (blank && blank.value !== '') cfg.blankRatePct = Number(blank.value);
+  const outlier = $('cfg-outlier');
+  if (outlier) cfg.outlierEnabled = outlier.checked;
+  return cfg;
+}
+
+async function runClean() {
+  const config = collectCleanConfig();
+  const result = SurveyCore.runCleaning(state.rows, state.columns, config);
+  state.cleanResult = result;
+  state.step.cleaned = true;
+  // 重新清洗后分析结果作废
+  state.step.analyzed = false;
+  state.analysis = { rowCol: null, colCol: null, result: null };
+  await storage.save('cleanResult', 'main', result);
+  await storage.save('appState', 'main', { step: state.step, cleanConfig: state.cleanConfig });
+  renderCleanResult();
+  renderStatusBar();
+  renderHome();
+  refreshNav();
+}
+
+function renderCleanResult() {
+  const box = $('clean-result');
+  box.classList.remove('hidden');
+  const r = state.cleanResult;
+  if (!r) return;
+  const s = r.stats;
+  let html = '<div class="alert ok">清洗完成：有效 <b>' + s.validCount + '</b> 份，无效 <b>' + s.invalidCount + '</b> 份</div>';
+  // 原因分布
+  const total = s.invalidCount || 1;
+  const tags = Object.keys(s.reasonCounts);
+  if (tags.length > 0) {
+    html += '<h3>无效原因分布</h3><div class="reason-row">';
+    tags.forEach((k) => {
+      const pct = Math.round((s.reasonCounts[k] / total) * 100);
+      html += '<span class="reason-tag" style="background:var(--amber-light);border:1px solid #f3dfae;color:#6b5526;">' +
+        esc(REASON_TAGS[k] || k) + ' ' + s.reasonCounts[k] + ' 份（' + pct + '%）</span>';
+    });
+    html += '</div>';
+  }
+  // 明细表
+  html += '<h3>清洗明细（共 ' + s.total + ' 份，展开可查看原始作答）</h3>';
+  html += '<div class="table-wrap"><table><thead><tr><th>答卷</th><th>状态</th><th>命中原因</th><th>原始作答</th></tr></thead><tbody>';
+  r.rows.forEach((row, i) => {
+    const tag = row.valid
+      ? '<span class="reason-tag" style="background:var(--green-light);border:1px solid #b9e3cc;color:#2f5c42;">有效</span>'
+      : '<span class="reason-tag" style="background:var(--danger-light);border:1px solid #f0c9c4;color:#8c2f24;">无效</span>';
+    const reasons = row.valid ? '-' : row.reasons.map((x) => REASON_TAGS[x] || x).join('、');
+    let detail = '<details><summary>查看作答</summary><table style="margin-top:6px;">';
+    state.header.forEach((h, ci) => {
+      detail += '<tr><th style="width:220px;">' + esc(h) + '</th><td>' + esc(state.rows[i][ci]) + '</td></tr>';
+    });
+    detail += '</table></details>';
+    html += '<tr><td>' + (i + 1) + '</td><td>' + tag + '</td><td>' + esc(reasons) + '</td><td>' + detail + '</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  box.innerHTML = html;
+}
+
+/* =====================================================================
+ * 交叉分析页
+ * ===================================================================== */
+function renderAnalysisConfig() {
+  const box = $('analysis-config');
+  const singleCols = state.columns.singleChoiceCols;
+  if (singleCols.length < 2) {
+    box.innerHTML = '<div class="alert warn">单选题维度不足 2 个，无法进行交叉分析。</div>';
+    $('analysis-result').classList.add('hidden');
+    return;
+  }
+  box.innerHTML = '';
+  const f1 = el('span', 'field', '');
+  f1.appendChild(el('label', '', '行维度'));
+  const sel1 = el('select', '', '');
+  sel1.id = 'an-row';
+  singleCols.forEach((ci) => {
+    const o = el('option', '', esc(state.header[ci]));
+    o.value = ci;
+    sel1.appendChild(o);
+  });
+  f1.appendChild(sel1);
+  box.appendChild(f1);
+
+  const f2 = el('span', 'field', '');
+  f2.appendChild(el('label', '', '列维度'));
+  const sel2 = el('select', '', '');
+  sel2.id = 'an-col';
+  singleCols.forEach((ci) => {
+    const o = el('option', '', esc(state.header[ci]));
+    o.value = ci;
+    sel2.appendChild(o);
+  });
+  f2.appendChild(sel2);
+  box.appendChild(f2);
+
+  // 恢复上次选择
+  if (state.analysis && state.analysis.rowCol != null) {
+    sel1.value = String(state.analysis.rowCol);
+    sel2.value = String(state.analysis.colCol);
+  } else {
+    sel1.value = String(singleCols[0]);
+    sel2.value = String(singleCols[1] != null ? singleCols[1] : singleCols[0]);
+  }
+
+  const btn = el('button', 'btn primary', '生成分析');
+  btn.id = 'btn-run-analysis';
+  box.appendChild(btn);
+
+  btn.addEventListener('click', runAnalysis);
+}
+
+function getValidRows() {
+  const cr = state.cleanResult;
+  return state.rows.filter((_, i) => cr.rows[i].valid);
+}
+
+function runAnalysis() {
+  const rowCol = Number($('an-row').value);
+  const colCol = Number($('an-col').value);
+  const validRows = getValidRows();
+  const result = SurveyCore.buildCrossTable(rowCol, colCol, validRows);
+  state.analysis = { rowCol, colCol, result };
+  state.step.analyzed = true;
+  storage.save('appState', 'main', { step: state.step, cleanConfig: state.cleanConfig });
+  renderAnalysisResult();
+  renderStatusBar();
+  renderHome();
+}
+
+function renderAnalysisResult() {
+  const box = $('analysis-result');
+  box.classList.remove('hidden');
+  const a = state.analysis;
+  const t = a.result;
+  const header = state.header;
+
+  // 交叉统计表
+  let html = '<h3>交叉统计表：' + esc(header[a.rowCol]) + ' × ' + esc(header[a.colCol]) + '</h3>';
+  html += '<div class="table-wrap"><table><thead><tr><th>' + esc(header[a.rowCol]) + ' \\ ' + esc(header[a.colCol]) + '</th>';
+  t.colVals.forEach((cv) => { html += '<th>' + esc(cv) + '</th>'; });
+  html += '<th>合计</th></tr></thead><tbody>';
+  t.rowVals.forEach((rv, ri) => {
+    html += '<tr><th>' + esc(rv) + '</th>';
+    t.colVals.forEach((cv, ci) => {
+      const pct = t.rowPct[ri][ci];
+      html += '<td>' + t.freq[ri][ci] + (pct > 0 ? '（' + (pct * 100).toFixed(1) + '%）' : '') + '</td>';
+    });
+    html += '<td><b>' + t.rowTotals[ri] + '</b></td></tr>';
+  });
+  // 合计行
+  html += '<tr><th>合计</th>';
+  t.colTotals.forEach((ct) => { html += '<td><b>' + ct + '</b></td>'; });
+  html += '<td><b>' + t.total + '</b></td></tr>';
+  html += '</tbody></table></div>';
+
+  // 复制按钮
+  html += '<div style="margin-top:10px;"><button class="btn small" id="btn-copy-table">复制表格（用于粘贴到报告）</button></div>';
+
+  // 柱状图
+  html += '<div class="chart-box" id="chart-box"></div>';
+  box.innerHTML = html;
+
+  const svg = SurveyCore.renderBarChartSVG(t, { width: 860, height: 420 });
+  $('chart-box').innerHTML = svg;
+
+  $('btn-copy-table').addEventListener('click', () => {
+    let text = header[a.rowCol] + ' × ' + header[a.colCol] + '\n';
+    text += '\t' + t.colVals.join('\t') + '\t合计\n';
+    t.rowVals.forEach((rv, ri) => {
+      text += rv + '\t' + t.colVals.map((_, ci) => t.freq[ri][ci]).join('\t') + '\t' + t.rowTotals[ri] + '\n';
+    });
+    text += '合计\t' + t.colTotals.join('\t') + '\t' + t.total + '\n';
+    navigator.clipboard.writeText(text).then(
+      () => { $('btn-copy-table').textContent = '已复制 ✓'; setTimeout(() => { $('btn-copy-table').textContent = '复制表格（用于粘贴到报告）'; }, 1500); },
+      () => alert('复制失败，请手动选择表格内容复制')
+    );
+  });
+}
+
+/* =====================================================================
+ * 导出页
+ * ===================================================================== */
+function downloadFile(content, filename, mime) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
+}
+
+function renderExportActions() {
+  const box = $('export-actions');
+  box.innerHTML = '';
+  const imported = state.step.imported;
+  const cleaned = state.step.cleaned;
+  const analyzed = state.step.analyzed;
+
+  const mkBtn = (id, label, enabled) => {
+    const b = el('button', 'btn', label);
+    b.id = id;
+    if (!enabled) b.disabled = true;
+    box.appendChild(b);
+    box.appendChild(el('span', 'muted', ' '));
+    return b;
+  };
+
+  // 清洗后数据
+  const b1 = mkBtn('exp-clean-data', '导出清洗后有效数据（CSV）', cleaned);
+  // 交叉表
+  const b2 = mkBtn('exp-cross-table', '导出当前交叉表（CSV）', analyzed);
+  // 图表 PNG
+  const b3 = mkBtn('exp-chart-png', '导出柱状图（PNG）', analyzed);
+  box.appendChild(el('div', '', ''));
+  // 备份
+  const b4 = mkBtn('exp-backup', '导出项目备份（可迁移/恢复）', imported);
+  const b5 = mkBtn('exp-restore', '恢复项目备份…', true);
+  const b6 = mkBtn('exp-clear', '清空项目数据', imported);
+  b6.classList.add('danger');
+  box.appendChild(el('div', '', ''));
+  box.appendChild(el('div', 'muted', '导出文件保存在浏览器默认下载目录。项目备份包含原始数据、清洗配置与全部结果，可在其他电脑上恢复。'));
+
+  b1.addEventListener('click', () => {
+    const validRows = SurveyCore.filterValidRows(state.rows, state.cleanResult);
+    downloadFile(SurveyCore.rowsToCSV(state.header, validRows), 'cleaned_data.csv', 'text/csv');
+  });
+  b2.addEventListener('click', () => {
+    if (!state.analysis.result) return;
+    downloadFile(SurveyCore.crossTableToCSV(state.analysis, state.header), 'cross_table.csv', 'text/csv');
+  });
+  b3.addEventListener('click', exportChartPNG);
+  b4.addEventListener('click', () => {
+    const backup = SurveyCore.buildBackup(
+      { header: state.header, rows: state.rows, columns: state.columns },
+      { step: state.step, cleanConfig: state.cleanConfig },
+      state.cleanResult
+    );
+    downloadFile(JSON.stringify(backup, null, 2), 'survey-project-backup.json', 'application/json');
+  });
+  b5.addEventListener('click', () => $('restore-file').click());
+  b6.addEventListener('click', clearProject);
+}
+
+function exportChartPNG() {
+  const svgEl = document.querySelector('#chart-box svg');
+  if (!svgEl) { alert('请先在交叉分析页生成图表'); return; }
+  const svgText = new XMLSerializer().serializeToString(svgEl);
+  const W = 860, H = 420;
+  const img = new Image();
+  const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = W * 2;
+    canvas.height = H * 2;
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = 'bar_chart.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); alert('图表导出失败'); };
+  img.src = url;
+}
+
+async function restoreProject() {
+  const file = $('restore-file').files[0];
+  if (!file) return;
+  const text = await readFileText(file);
+  let backup;
+  try {
+    backup = SurveyCore.parseBackup(text);
+  } catch (e) {
+    alert('恢复失败：' + e.message);
+    $('restore-file').value = '';
+    return;
+  }
+  if (!confirm('恢复备份将覆盖当前项目数据（原始数据、清洗结果与分析），是否继续？')) {
+    $('restore-file').value = '';
+    return;
+  }
+  await storage.save('appState', 'main', backup.appState);
+  await storage.save('dataset', 'main', backup.dataset);
+  await storage.save('cleanResult', 'main', backup.cleanResult == null ? null : backup.cleanResult);
+  // 刷新内存状态
+  state.header = backup.dataset.header;
+  state.rows = backup.dataset.rows;
+  state.columns = backup.dataset.columns;
+  state.step = backup.appState.step || { imported: true, cleaned: false, analyzed: false };
+  if (backup.appState.cleanConfig) state.cleanConfig = Object.assign(state.cleanConfig, backup.appState.cleanConfig);
+  state.cleanResult = backup.cleanResult;
+  if (state.cleanResult) state.step.cleaned = true;
+  state.analysis = { rowCol: null, colCol: null, result: null };
+  $('restore-file').value = '';
+  refreshNav();
+  renderStatusBar();
+  renderHome();
+  renderCleanResult();
+  $('clean-result').classList.remove('hidden');
+  showPage('home');
+  alert('恢复成功');
+}
+
+async function clearProject() {
+  if (!confirm('将清空全部项目数据（原始数据、清洗结果与分析配置），且不可恢复。确定清空吗？')) return;
+  await storage.clearAll();
+  state = {
+    header: null, rows: null, columns: null,
+    step: { imported: false, cleaned: false, analyzed: false },
+    cleanConfig: {
+      durationEnabled: true, durationSec: 60, blankRatePct: 50,
+      contradictionRules: [], outlierEnabled: true,
+    },
+    cleanResult: null,
+    analysis: { rowCol: null, colCol: null, result: null },
+  };
+  $('clean-result').classList.add('hidden');
+  $('clean-config').innerHTML = '';
+  refreshNav();
+  renderStatusBar();
+  renderHome();
+  showPage('home');
+  alert('已清空项目数据');
+}
+
+/* =====================================================================
+ * 初始化
+ * ===================================================================== */
+async function init() {
+  document.getElementById('nav').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn || btn.disabled) return;
+    showPage(btn.dataset.page);
+  });
+  $('btn-start').addEventListener('click', () => showPage('import'));
+  $('btn-goto-clean').addEventListener('click', () => showPage('clean'));
+  $('btn-goto-analysis').addEventListener('click', () => showPage('analysis'));
+
+  // 文件选择
+  $('dropzone').addEventListener('click', () => $('file-input').click());
+  $('file-input').addEventListener('change', (e) => {
+    if (e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+    e.target.value = '';
+  });
+  ['dragover', 'dragenter'].forEach((ev) => {
+    $('dropzone').addEventListener(ev, (e) => { e.preventDefault(); $('dropzone').style.borderColor = 'var(--primary)'; });
+  });
+  ['dragleave', 'drop'].forEach((ev) => {
+    $('dropzone').addEventListener(ev, (e) => { e.preventDefault(); $('dropzone').style.borderColor = 'var(--border)'; });
+  });
+  $('dropzone').addEventListener('drop', (e) => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  $('btn-confirm-import').addEventListener('click', confirmImport);
+  $('btn-cancel-import').addEventListener('click', () => {
+    pendingImport = null;
+    $('import-preview').classList.add('hidden');
+    $('import-error').innerHTML = '';
+  });
+  $('btn-run-clean').addEventListener('click', runClean);
+  $('restore-file').addEventListener('change', restoreProject);
+
+  // 从本地恢复状态
+  try {
+    const dataset = await storage.load('dataset', 'main');
+    const appState = await storage.load('appState', 'main');
+    const cleanResult = await storage.load('cleanResult', 'main');
+    if (dataset && dataset.header) {
+      state.header = dataset.header;
+      state.rows = dataset.rows;
+      state.columns = dataset.columns;
+      if (appState) {
+        state.step = appState.step || state.step;
+        if (appState.cleanConfig) state.cleanConfig = Object.assign(state.cleanConfig, appState.cleanConfig);
+      }
+      state.cleanResult = cleanResult;
+      if (cleanResult) state.step.cleaned = true;
+    }
+  } catch (e) {
+    console.warn('本地状态恢复失败', e);
+  }
+
+  refreshNav();
+  renderStatusBar();
+  renderHome();
+  if (state.step.cleaned) { renderCleanResult(); }
+  if (state.step.imported && !state.step.cleaned) { renderCleanConfig(); }
+  if (state.step.analyzed) { renderAnalysisConfig(); }
+}
+init();
+</script>
+</body>
+</html>

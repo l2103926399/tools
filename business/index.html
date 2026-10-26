@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商业分析模型工具箱</title>
+<style>
+/* ===== 报告用纸主题 ===== */
+:root {
+  --paper: #f7f3ea;
+  --surface: #fffdf8;
+  --ink: #1e1b16;
+  --ink-2: #3d362c;
+  --muted: #6f675b;
+  --faint: #a89e8f;
+  --line: #e2dbcc;
+  --line-strong: #cfc6b3;
+  --accent: #8a1c3c;
+  --accent-dark: #6f1730;
+  --accent-soft: #f6e9ee;
+  --green: #2f5d50;
+  --serif: Georgia, "Times New Roman", "Songti SC", "SimSun", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--paper);
+  color: var(--ink);
+  line-height: 1.7;
+  font-size: 14px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ===== 顶栏 ===== */
+header {
+  background: rgba(247, 243, 234, .92);
+  border-bottom: 1px solid var(--line-strong);
+  padding: 0 26px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 26px;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(6px);
+}
+.logo {
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--ink);
+  padding: 16px 0;
+  white-space: nowrap;
+}
+.logo::after {
+  content: "BUSINESS MODEL TOOLKIT";
+  display: block;
+  font-family: var(--sans);
+  font-size: 9.5px;
+  letter-spacing: .2em;
+  color: var(--faint);
+  font-weight: 400;
+  margin-top: -2px;
+}
+.nav { display: flex; flex-wrap: wrap; gap: 2px; margin-left: auto; }
+.nav-item {
+  padding: 7px 11px;
+  border-radius: 0;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--muted);
+  border: none;
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+  transition: color .15s, border-color .15s;
+}
+.nav-item:hover { color: var(--accent); }
+.nav-item.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+main { max-width: 1080px; width: 100%; margin: 0 auto; padding: 30px 24px 48px; flex: 1 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+.view.module.active {
+  display: grid;
+  grid-template-columns: minmax(340px, 410px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.view.module .module-head { grid-column: 1 / -1; }
+@media (max-width: 900px) {
+  .view.module.active { grid-template-columns: 1fr; }
+}
+
+footer {
+  text-align: center;
+  color: var(--faint);
+  font-size: 12.5px;
+  padding: 18px 20px 26px;
+  border-top: 1px solid var(--line);
+  letter-spacing: .02em;
+}
+
+/* ===== 首页 hero ===== */
+.hero {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 4px;
+  padding: 34px 32px;
+  margin-bottom: 20px;
+  position: relative;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: var(--accent);
+}
+.hero h1 {
+  font-family: var(--serif);
+  font-size: 30px;
+  line-height: 1.35;
+  letter-spacing: .01em;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+.hero p { font-size: 14.5px; color: var(--muted); max-width: 62ch; }
+
+.steps {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 20px 22px;
+  margin-bottom: 20px;
+}
+.steps h2 {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--ink);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.steps ol { padding-left: 20px; font-size: 13.5px; color: var(--ink-2); }
+.steps li { margin-bottom: 4px; }
+
+/* ===== 模型卡片 ===== */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 14px; margin-bottom: 20px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color .15s, transform .15s;
+}
+.card:hover { border-color: var(--line-strong); transform: translateY(-1px); }
+.card h3 {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: .01em;
+}
+.card p { font-size: 13px; color: var(--muted); flex: 1; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+
+/* ===== 模块头 ===== */
+.module-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 14px;
+  margin-bottom: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-strong);
+}
+.module-head h2 {
+  font-family: var(--serif);
+  font-size: 23px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--ink);
+}
+.module-head .desc { font-size: 12.5px; color: var(--muted); }
+
+/* ===== 表单 / 结果 ===== */
+.form-box, .result-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 20px;
+}
+.form-box { position: sticky; top: 86px; }
+.result-box { border-left: 3px solid var(--accent-soft); }
+.form-box h3, .result-box h3 {
+  font-family: var(--serif);
+  font-size: 14.5px;
+  color: var(--accent);
+  letter-spacing: .04em;
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink-2);
+  margin-bottom: 4px;
+}
+.field label .req { color: var(--accent); margin-left: 2px; }
+.field label .hint { font-weight: 400; color: var(--faint); margin-left: 6px; font-size: 11.5px; }
+.field input, .field textarea {
+  width: 100%;
+  padding: 8px 2px;
+  border: none;
+  border-bottom: 1px solid var(--line-strong);
+  border-radius: 0;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: transparent;
+  outline: none;
+  transition: border-color .15s;
+}
+.field textarea { min-height: 54px; resize: vertical; line-height: 1.7; }
+.field input:focus, .field textarea:focus { border-bottom-color: var(--accent); }
+.field input::placeholder, .field textarea::placeholder { color: #b6ac9c; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+@media (max-width: 720px) { .row2, .row3 { grid-template-columns: 1fr; } }
+
+/* ===== 按钮 ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btn:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+.btn.secondary { background: transparent; color: var(--accent); border-color: var(--line-strong); }
+.btn.secondary:hover { border-color: var(--accent); background: var(--accent-soft); }
+.btn.danger { background: transparent; color: #9a2c2c; border-color: #d9b3a8; }
+.btn.danger:hover { background: #fbf0ed; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* ===== 输出区 ===== */
+.output {
+  width: 100%;
+  min-height: 460px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-size: 13.5px;
+  font-family: var(--sans);
+  line-height: 1.85;
+  color: var(--ink);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0, transparent 25px, rgba(138, 28, 60, .06) 25px, rgba(138, 28, 60, .06) 26px),
+    #fffefb;
+  resize: vertical;
+  outline: none;
+}
+.output:focus { border-color: var(--accent); }
+.output-note { font-size: 11.5px; color: var(--faint); margin-top: 8px; line-height: 1.6; }
+
+/* ===== 提示 ===== */
+.msg { font-size: 12.5px; padding: 8px 12px; border-radius: 3px; margin-top: 10px; display: none; }
+.msg.error { display: block; background: #fbf0ee; color: #9a2c2c; border: 1px solid #e6c3b9; }
+.msg.ok { display: block; background: #eef5f1; color: #2f5d50; border: 1px solid #c8ded4; }
+
+/* ===== 历史 ===== */
+.history-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--line-strong);
+  border-radius: 3px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.history-item:hover { border-left-color: var(--accent); }
+.history-item .hi-info { flex: 1; min-width: 200px; }
+.history-item .hi-title { font-family: var(--serif); font-size: 15px; font-weight: 700; }
+.history-item .hi-meta { font-size: 12px; color: var(--faint); letter-spacing: .02em; }
+.empty-tip { text-align: center; color: var(--faint); font-size: 13.5px; padding: 40px 0; }
+
+/* ===== 响应式 ===== */
+@media (max-width: 720px) {
+  header { padding: 0 14px; }
+  .logo { font-size: 17px; padding: 12px 0; }
+  .nav { margin-left: 0; width: 100%; padding-bottom: 6px; }
+  main { padding: 20px 14px 36px; }
+  .hero { padding: 24px 20px; }
+  .hero h1 { font-size: 23px; }
+  .form-box { position: static; }
+  .output { min-height: 340px; }
+}
+
+/* 左栏表单：单列排布，避免字段被压窄 */
+.form-box { position: static; }
+.form-box .row2, .form-box .row3 { grid-template-columns: 1fr; gap: 10px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">商业分析模型工具箱</div>
+  <nav class="nav" id="main-nav">
+    <button class="nav-item active" data-view="home">首页</button>
+    <button class="nav-item" data-view="swot">SWOT</button>
+    <button class="nav-item" data-view="five">五力</button>
+    <button class="nav-item" data-view="canvas">画布</button>
+    <button class="nav-item" data-view="mkt">4P</button>
+    <button class="nav-item" data-view="history">历史记录</button>
+  </nav>
+</header>
+
+<main>
+  <!-- ========== 首页 ========== -->
+  <section id="view-home" class="view active">
+    <div class="hero">
+      <h1>商业分析模型工具箱</h1>
+      <p>填关键词，5 分钟搭好分析框架。内置 SWOT、波特五力、商业模式画布、营销 4P 四类经典模型。</p>
+    </div>
+    <div class="cards" id="home-cards">
+      <div class="card">
+        <h3>SWOT 分析</h3>
+        <p>分析企业/项目的优势、劣势、机会、威胁，并生成 SO/ST/WO/WT 组合策略。</p>
+        <button class="btn" data-goto="swot">进入模块</button>
+      </div>
+      <div class="card">
+        <h3>波特五力</h3>
+        <p>判断行业竞争激烈程度，看清现有竞争者、潜在进入者、替代品、供应商与购买者五股力量。</p>
+        <button class="btn" data-goto="five">进入模块</button>
+      </div>
+      <div class="card">
+        <h3>商业模式画布</h3>
+        <p>用 9 宫格看清一个生意怎么运转、靠什么赚钱，并标注核心优势与风险。</p>
+        <button class="btn" data-goto="canvas">进入模块</button>
+      </div>
+      <div class="card">
+        <h3>营销 4P</h3>
+        <p>从产品、价格、渠道、推广四方面梳理营销策略，支持一键切换 4C 用户视角。</p>
+        <button class="btn" data-goto="mkt">进入模块</button>
+      </div>
+    </div>
+    <div class="steps">
+      <h2>三步使用说明</h2>
+      <ol>
+        <li>选一个分析模型（如 SWOT）。</li>
+        <li>填企业/项目名称和关键词。</li>
+        <li>点「生成分析」，在结果区修改完善，再复制或导出到你的报告里。</li>
+      </ol>
+    </div>
+    <div class="toolbar">
+      <button class="btn secondary" id="home-history">查看历史记录</button>
+      <button class="btn secondary" id="home-export">备份全部数据（JSON）</button>
+      <button class="btn secondary" id="home-import">从备份恢复（JSON）</button>
+      <input type="file" id="import-file" accept=".json,application/json" style="display:none;">
+    </div>
+  </section>
+
+  <!-- ========== SWOT ========== -->
+  <section id="view-swot" class="view module">
+    <div class="module-head">
+      <h2>SWOT 分析</h2>
+      <span class="desc">内部分析优势/劣势，外部分析机会/威胁，生成组合策略</span>
+    </div>
+    <div class="form-box">
+      <h3>填写信息</h3>
+      <div class="field">
+        <label>企业 / 项目名称<span class="req">*</span></label>
+        <input type="text" id="swot-name" placeholder="例如：星巴克">
+      </div>
+      <div class="field">
+        <label>核心业务一句话<span class="hint">选填</span></label>
+        <input type="text" id="swot-business" placeholder="例如：中高端现磨咖啡连锁">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>优势关键词<span class="req">*</span><span class="hint">1-5 个，用逗号或顿号分隔</span></label>
+          <textarea id="swot-s" placeholder="品牌，门店网络，会员体系"></textarea>
+        </div>
+        <div class="field">
+          <label>劣势关键词<span class="req">*</span><span class="hint">1-5 个</span></label>
+          <textarea id="swot-w" placeholder="价格偏高，同质化竞争，扩张成本"></textarea>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>机会关键词<span class="req">*</span><span class="hint">1-5 个</span></label>
+          <textarea id="swot-o" placeholder="咖啡消费升级，下沉市场，即饮场景"></textarea>
+        </div>
+        <div class="field">
+          <label>威胁关键词<span class="req">*</span><span class="hint">1-5 个</span></label>
+          <textarea id="swot-t" placeholder="新品牌涌入，成本上涨，健康饮食趋势"></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="swot-generate">生成分析</button>
+        <button class="btn secondary" id="swot-example">查看示例</button>
+      </div>
+      <div class="msg" id="swot-msg"></div>
+    </div>
+    <div class="result-box">
+      <h3>分析结果（可直接编辑）</h3>
+      <textarea class="output" id="swot-output" placeholder="点击「生成分析」后，结果将显示在这里，可直接修改。"></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" id="swot-copy">复制全文</button>
+        <button class="btn secondary" id="swot-export">导出 Markdown</button>
+      </div>
+      <div class="output-note">* 本内容为模板生成的初稿，请结合实际修改后使用。每次生成会自动保存到历史记录。</div>
+    </div>
+  </section>
+
+  <!-- ========== 波特五力 ========== -->
+  <section id="view-five" class="view module">
+    <div class="module-head">
+      <h2>波特五力分析</h2>
+      <span class="desc">从五个维度判断行业的竞争格局与激烈程度</span>
+    </div>
+    <div class="form-box">
+      <h3>填写信息</h3>
+      <div class="row2">
+        <div class="field">
+          <label>行业名称<span class="req">*</span></label>
+          <input type="text" id="five-industry" placeholder="例如：现制咖啡行业">
+        </div>
+        <div class="field">
+          <label>核心品类<span class="hint">选填</span></label>
+          <input type="text" id="five-category" placeholder="例如：现磨咖啡">
+        </div>
+      </div>
+      <div class="field">
+        <label>主要玩家<span class="hint">选填，2-4 个</span></label>
+        <input type="text" id="five-players" placeholder="例如：瑞幸、星巴克、库迪、Manner">
+      </div>
+      <div class="field">
+        <label>上下游基本情况<span class="hint">选填</span></label>
+        <textarea id="five-chain" placeholder="例如：上游咖啡豆供应商集中，下游消费者价格敏感"></textarea>
+      </div>
+      <div class="field">
+        <label>其他补充说明<span class="hint">选填</span></label>
+        <textarea id="five-extra" placeholder="其他影响行业竞争的信息"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="five-generate">生成分析</button>
+        <button class="btn secondary" id="five-example">查看示例</button>
+      </div>
+      <div class="msg" id="five-msg"></div>
+    </div>
+    <div class="result-box">
+      <h3>分析结果（可直接编辑）</h3>
+      <textarea class="output" id="five-output" placeholder="点击「生成分析」后，结果将显示在这里，可直接修改。"></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" id="five-copy">复制全文</button>
+        <button class="btn secondary" id="five-export">导出 Markdown</button>
+      </div>
+      <div class="output-note">* 本内容为模板生成的初稿，请结合实际修改后使用。每次生成会自动保存到历史记录。</div>
+    </div>
+  </section>
+
+  <!-- ========== 商业模式画布 ========== -->
+  <section id="view-canvas" class="view module">
+    <div class="module-head">
+      <h2>商业模式画布</h2>
+      <span class="desc">用 9 宫格梳理商业模式，标注核心优势与潜在风险</span>
+    </div>
+    <div class="form-box">
+      <h3>填写信息</h3>
+      <div class="field">
+        <label>项目 / 企业名称<span class="req">*</span></label>
+        <input type="text" id="canvas-name" placeholder="例如：某连锁咖啡品牌">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>目标用户（客户细分）<span class="req">*</span></label>
+          <textarea id="canvas-customer" placeholder="例如：都市白领、学生、咖啡爱好者"></textarea>
+        </div>
+        <div class="field">
+          <label>价值主张<span class="req">*</span></label>
+          <textarea id="canvas-value" placeholder="例如：高性价比的现磨咖啡、便捷购买体验"></textarea>
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label>渠道<span class="hint">选填</span></label>
+          <input type="text" id="canvas-channel" placeholder="例如：线下门店、小程序、外卖平台">
+        </div>
+        <div class="field">
+          <label>客户关系<span class="hint">选填</span></label>
+          <input type="text" id="canvas-relation" placeholder="例如：会员体系、社群运营">
+        </div>
+        <div class="field">
+          <label>收入来源<span class="hint">选填</span></label>
+          <input type="text" id="canvas-revenue" placeholder="例如：饮品销售、周边商品">
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label>关键资源<span class="hint">选填</span></label>
+          <input type="text" id="canvas-resource" placeholder="例如：品牌、供应链、门店网络">
+        </div>
+        <div class="field">
+          <label>关键活动<span class="hint">选填</span></label>
+          <input type="text" id="canvas-activity" placeholder="例如：产品研发、门店运营、营销推广">
+        </div>
+        <div class="field">
+          <label>关键伙伴<span class="hint">选填</span></label>
+          <input type="text" id="canvas-partner" placeholder="例如：咖啡豆供应商、外卖平台">
+        </div>
+      </div>
+      <div class="field">
+        <label>成本结构<span class="hint">选填</span></label>
+        <input type="text" id="canvas-cost" placeholder="例如：租金、人工、原材料">
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="canvas-generate">生成画布</button>
+        <button class="btn secondary" id="canvas-example">查看示例</button>
+      </div>
+      <div class="msg" id="canvas-msg"></div>
+    </div>
+    <div class="result-box">
+      <h3>分析结果（可直接编辑）</h3>
+      <textarea class="output" id="canvas-output" placeholder="点击「生成画布」后，结果将显示在这里，可直接修改。"></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" id="canvas-copy">复制全文</button>
+        <button class="btn secondary" id="canvas-export">导出 Markdown</button>
+      </div>
+      <div class="output-note">* 本内容为模板生成的初稿，请结合实际修改后使用。每次生成会自动保存到历史记录。</div>
+    </div>
+  </section>
+
+  <!-- ========== 营销 4P ========== -->
+  <section id="view-mkt" class="view module">
+    <div class="module-head">
+      <h2>营销 4P 策略分析</h2>
+      <span class="desc">从产品、价格、渠道、推广四要素梳理营销策略，可切换 4C 用户视角</span>
+    </div>
+    <div class="form-box">
+      <h3>填写信息</h3>
+      <div class="field">
+        <label>产品 / 品牌名称<span class="req">*</span></label>
+        <input type="text" id="mkt-name" placeholder="例如：某连锁咖啡品牌">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>产品（Product）关键词<span class="hint">选填</span></label>
+          <textarea id="mkt-product" placeholder="品类、卖点、质量、包装等，例如：现磨咖啡，高性价比，标准化出品"></textarea>
+        </div>
+        <div class="field">
+          <label>价格（Price）关键词<span class="hint">选填</span></label>
+          <textarea id="mkt-price" placeholder="定价水平、促销价、性价比等，例如：9.9 元基础款，会员折扣"></textarea>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>渠道（Place）关键词<span class="hint">选填</span></label>
+          <textarea id="mkt-place" placeholder="线上/线下、分销方式等，例如：线下门店，小程序点单，外卖平台"></textarea>
+        </div>
+        <div class="field">
+          <label>推广（Promotion）关键词<span class="hint">选填</span></label>
+          <textarea id="mkt-promotion" placeholder="广告、活动、社交媒体等，例如：联名活动，社交媒体种草，门店促销"></textarea>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="mkt-generate">生成策略</button>
+        <button class="btn secondary" id="mkt-example">查看示例</button>
+        <button class="btn secondary" id="mkt-toggle">切换为 4C 视角</button>
+      </div>
+      <div class="msg" id="mkt-msg"></div>
+    </div>
+    <div class="result-box">
+      <h3>分析结果（可直接编辑）</h3>
+      <textarea class="output" id="mkt-output" placeholder="点击「生成策略」后，结果将显示在这里，可直接修改。"></textarea>
+      <div class="btn-row">
+        <button class="btn secondary" id="mkt-copy">复制全文</button>
+        <button class="btn secondary" id="mkt-export">导出 Markdown</button>
+      </div>
+      <div class="output-note">* 本内容为模板生成的初稿，请结合实际修改后使用。每次生成会自动保存到历史记录。</div>
+    </div>
+  </section>
+
+  <!-- ========== 历史记录 ========== -->
+  <section id="view-history" class="view">
+    <div class="module-head">
+      <h2>历史记录</h2>
+      <span class="desc">所有生成的分析自动保存在本机浏览器，刷新不丢失</span>
+    </div>
+    <div class="toolbar">
+      <button class="btn" id="history-export">备份全部数据（JSON）</button>
+      <button class="btn secondary" id="history-import">从备份恢复（JSON）</button>
+      <button class="btn danger" id="history-clear">清空全部记录</button>
+    </div>
+    <div id="history-list"></div>
+  </section>
+</main>
+
+<footer>
+  数据仅存本机浏览器，无任何上传 · 商业分析模型工具箱 v1.0
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var BAMT = {};
+  /* ===== 阶段 0：视图切换与导航 ===== */
+  var VIEW_IDS = ['home', 'swot', 'five', 'canvas', 'mkt', 'history'];
+  function showView(id) {
+    if (VIEW_IDS.indexOf(id) < 0) { id = 'home'; }
+    for (var i = 0; i < VIEW_IDS.length; i++) {
+      var v = document.getElementById('view-' + VIEW_IDS[i]);
+      if (v) { v.classList.toggle('active', VIEW_IDS[i] === id); }
+    }
+    var navs = document.querySelectorAll('#main-nav .nav-item');
+    for (var j = 0; j < navs.length; j++) {
+      navs[j].classList.toggle('active', navs[j].getAttribute('data-view') === id);
+    }
+    if (id === 'history' && typeof renderHistory === 'function') {
+      renderHistory();
+    }
+    window.scrollTo(0, 0);
+  }
+  BAMT.showView = showView;
+
+  /* ===== 阶段 1：公共能力层 ===== */
+  var STORAGE_KEY = 'bamt_history';
+  var STORAGE_WARN = '本机存储空间接近上限，请先导出备份，再清理部分历史记录。';
+  var MODULE_NAMES = { swot: 'SWOT 分析', five: '波特五力', canvas: '商业模式画布', mkt: '营销 4P' };
+  var FIELD_MAP = {
+    swot: [['swot-name', 'name'], ['swot-business', 'business'], ['swot-s', 's'], ['swot-w', 'w'], ['swot-o', 'o'], ['swot-t', 't']],
+    five: [['five-industry', 'industry'], ['five-category', 'category'], ['five-players', 'players'], ['five-chain', 'chain'], ['five-extra', 'extra']],
+    canvas: [['canvas-name', 'name'], ['canvas-customer', 'customer'], ['canvas-value', 'value'], ['canvas-channel', 'channel'], ['canvas-relation', 'relation'], ['canvas-revenue', 'revenue'], ['canvas-resource', 'resource'], ['canvas-activity', 'activity'], ['canvas-partner', 'partner'], ['canvas-cost', 'cost']],
+    mkt: [['mkt-name', 'name'], ['mkt-product', 'product'], ['mkt-price', 'price'], ['mkt-place', 'place'], ['mkt-promotion', 'promotion']]
+  };
+  var OUTPUT_MAP = { swot: 'swot-output', five: 'five-output', canvas: 'canvas-output', mkt: 'mkt-output' };
+
+  function splitKeywords(str) {
+    if (!str) return [];
+    var seen = {}, out = [];
+    String(str).split(/[,，、;\n\r\t ]+/).forEach(function (w) {
+      w = w.trim();
+      if (w && !seen[w]) { seen[w] = 1; out.push(w); }
+    });
+    return out;
+  }
+  function makeId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  }
+  function nowString() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function buildRecord(module, title, inputs, output, createdAt) {
+    var t = createdAt || nowString();
+    return { id: makeId(), module: module, title: title, inputs: inputs || {}, output: output || '', created_at: t, updated_at: t };
+  }
+  function loadRecords() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return [];
+      var arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return [];
+      return arr.slice().sort(function (a, b) {
+        return String(b.created_at || '').localeCompare(String(a.created_at || ''));
+      });
+    } catch (e) { return []; }
+  }
+  function saveRecords(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+  function addRecord(rec) {
+    var list = loadRecords();
+    list.unshift(rec);
+    try { saveRecords(list); } catch (e) { window.alert(STORAGE_WARN); }
+    return rec;
+  }
+  function updateRecord(rec) {
+    var list = loadRecords();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === rec.id) {
+        list[i] = rec;
+        list[i].updated_at = nowString();
+        break;
+      }
+    }
+    try { saveRecords(list); } catch (e) { window.alert(STORAGE_WARN); }
+    return rec;
+  }
+  function deleteRecord(id) {
+    saveRecords(loadRecords().filter(function (r) { return r.id !== id; }));
+  }
+  function clearAll() {
+    saveRecords([]);
+  }
+  function mergeHistory(existing, incoming) {
+    var map = {};
+    (existing || []).forEach(function (r) { if (r && r.id) { map[r.id] = r; } });
+    (incoming || []).forEach(function (r) {
+      if (r && r.id) { map[r.id] = Object.assign({}, map[r.id], r); }
+    });
+    var keys = Object.keys(map), out = [];
+    for (var i = 0; i < keys.length; i++) { out.push(map[keys[i]]); }
+    return out;
+  }
+  function serializeBackup(records) {
+    return JSON.stringify({ app: 'bamt', version: 1, exported_at: nowString(), records: records || [] }, null, 2);
+  }
+  function parseBackup(json) {
+    try {
+      var data = JSON.parse(json);
+      var arr = (data && Array.isArray(data.records)) ? data.records : (Array.isArray(data) ? data : null);
+      if (!arr) return null;
+      return arr.filter(function (r) { return r && r.id; });
+    } catch (e) { return null; }
+  }
+  function toMarkdown(record) {
+    return '# ' + (record.title || '分析结果') + '\n\n' + (record.output || '');
+  }
+  function downloadFile(name, content) {
+    var blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+  function copyText(text, done) {
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(true); }
+      catch (e) { done(false); }
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { done(true); }, fallback);
+    } else { fallback(); }
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function showMsg(id, type, text) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.className = 'msg ' + type;
+    el.textContent = text;
+    if (type === 'ok') { setTimeout(function () { el.className = 'msg'; }, 3000); }
+  }
+
+  /* ---- 历史记录视图 ---- */
+  function renderHistory() {
+    var listEl = document.getElementById('history-list');
+    var records = loadRecords();
+    if (!records.length) {
+      listEl.innerHTML = '<div class="empty-tip">还没有分析记录，去首页选择一个模型开始吧。</div>';
+      return;
+    }
+    var html = '';
+    records.forEach(function (r) {
+      var moduleName = MODULE_NAMES[r.module] || r.module;
+      html += '<div class="history-item" data-id="' + esc(r.id) + '">' +
+        '<div class="hi-info">' +
+        '<div class="hi-title">' + esc(r.title || '未命名') + '</div>' +
+        '<div class="hi-meta">' + esc(moduleName) + ' · ' + esc(r.created_at || '') + '</div>' +
+        '</div>' +
+        '<button class="btn secondary" data-act="fill">回填</button>' +
+        '<button class="btn danger" data-act="del">删除</button>' +
+        '</div>';
+    });
+    listEl.innerHTML = html;
+  }
+  function backfillRecord(id) {
+    var records = loadRecords();
+    var rec = null;
+    for (var i = 0; i < records.length; i++) { if (records[i].id === id) { rec = records[i]; break; } }
+    if (!rec) { window.alert('记录不存在或已被删除。'); return; }
+    if (!FIELD_MAP[rec.module]) { window.alert('未知模块类型。'); return; }
+    var map = FIELD_MAP[rec.module];
+    for (var j = 0; j < map.length; j++) {
+      var el = document.getElementById(map[j][0]);
+      if (el) { el.value = (rec.inputs && rec.inputs[map[j][1]] != null) ? rec.inputs[map[j][1]] : ''; }
+    }
+    var outEl = document.getElementById(OUTPUT_MAP[rec.module]);
+    if (outEl) { outEl.value = rec.output || ''; }
+    currentBackfillId[rec.module] = rec.id;
+    showView(rec.module);
+  }
+  function exportBackup() {
+    var d = new Date();
+    function p(n) { return (n < 10 ? '0' : '') + n; }
+    var stamp = d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate());
+    var json = serializeBackup(loadRecords());
+    downloadFile('bamt-backup-' + stamp + '.json', json);
+  }
+  function importBackup(file) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var incoming = parseBackup(reader.result);
+      if (!incoming) { window.alert('备份文件解析失败，请确认选择了正确的 JSON 备份文件。'); return; }
+      if (!window.confirm('将导入 ' + incoming.length + ' 条记录（与现有记录按 ID 合并去重），是否继续？')) { return; }
+      var merged = mergeHistory(loadRecords(), incoming);
+      saveRecords(merged);
+      renderHistory();
+      window.alert('导入完成，当前共 ' + merged.length + ' 条记录。');
+    };
+    reader.onerror = function () { window.alert('读取文件失败。'); };
+    reader.readAsText(file, 'utf-8');
+  }
+
+  /* ---- 通用事件绑定（阶段 1）---- */
+  function bindCommonEvents() {
+    var historyList = document.getElementById('history-list');
+    if (historyList) {
+      historyList.addEventListener('click', function (e) {
+        var btn = e.target.closest ? e.target.closest('[data-act]') : null;
+        if (!btn) return;
+        var item = btn.closest('[data-id]');
+        var id = item ? item.getAttribute('data-id') : '';
+        var act = btn.getAttribute('data-act');
+        if (act === 'fill') { backfillRecord(id); }
+        else if (act === 'del') {
+          if (window.confirm('确定删除这条记录吗？')) { deleteRecord(id); renderHistory(); }
+        }
+      });
+    }
+    var pairs = [
+      ['history-export', exportBackup], ['home-export', exportBackup],
+      ['history-import', function () { document.getElementById('import-file').click(); }],
+      ['home-import', function () { document.getElementById('import-file').click(); }],
+      ['home-history', function () { showView('history'); renderHistory(); }]
+    ];
+    pairs.forEach(function (p) {
+      var el = document.getElementById(p[0]);
+      if (el) { el.addEventListener('click', p[1]); }
+    });
+    var importFile = document.getElementById('import-file');
+    if (importFile) {
+      importFile.addEventListener('change', function () {
+        if (importFile.files && importFile.files[0]) { importBackup(importFile.files[0]); }
+        importFile.value = '';
+      });
+    }
+    var clearBtn = document.getElementById('history-clear');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function () {
+        if (window.confirm('确定清空全部历史记录吗？此操作不可恢复，建议先备份。')) {
+          clearAll();
+          renderHistory();
+        }
+      });
+    }
+    /* 各模块复制/导出 */
+    ['swot', 'five', 'canvas', 'mkt'].forEach(function (mod) {
+      var copyBtn = document.getElementById(mod + '-copy');
+      var outEl = document.getElementById(mod + '-output');
+      if (copyBtn && outEl) {
+        copyBtn.addEventListener('click', function () {
+          copyText(outEl.value, function (ok) {
+            showMsg(mod + '-msg', ok ? 'ok' : 'error', ok ? '已复制全文，可直接粘贴。' : '复制失败，请手动全选结果后复制（Ctrl+C）。');
+          });
+        });
+      }
+      var exportBtn = document.getElementById(mod + '-export');
+      if (exportBtn && outEl) {
+        exportBtn.addEventListener('click', function () {
+          var nameInput = document.getElementById(mod + '-name') || document.getElementById(mod + '-industry');
+          var title = (nameInput && nameInput.value) ? nameInput.value : MODULE_NAMES[mod];
+          downloadFile(title + '.md', toMarkdown({ title: title, output: outEl.value }));
+        });
+      }
+    });
+  }
+
+  BAMT.splitKeywords = splitKeywords;
+  BAMT.makeId = makeId;
+  BAMT.buildRecord = buildRecord;
+  BAMT.loadRecords = loadRecords;
+  BAMT.addRecord = addRecord;
+  BAMT.updateRecord = updateRecord;
+  BAMT.deleteRecord = deleteRecord;
+  BAMT.clearAll = clearAll;
+  BAMT.mergeHistory = mergeHistory;
+  BAMT.serializeBackup = serializeBackup;
+  BAMT.parseBackup = parseBackup;
+  BAMT.toMarkdown = toMarkdown;
+  BAMT.STORAGE_WARN = STORAGE_WARN;
+  BAMT.FIELD_MAP = FIELD_MAP;
+  BAMT.backfillRecord = backfillRecord;
+
+  /* ===== 阶段 2：模板引擎与四大模块 ===== */
+  var DRAFT_NOTE = '> *本内容为模板生成的初稿，请结合实际修改后使用。*\n\n';
+  var EXAMPLES = {
+    swot: { name: '某连锁咖啡品牌', business: '现磨咖啡连锁', s: '品牌，供应链，门店网络', w: '价格偏高，同质化竞争', o: '咖啡消费升级，下沉市场，即饮场景', t: '新品牌涌入，原材料成本上涨' },
+    five: { industry: '现制咖啡行业', category: '现磨咖啡', players: '瑞幸，星巴克，库迪', chain: '上游咖啡豆供应商集中，下游消费者价格敏感', extra: '行业价格战持续，头部品牌加速下沉' },
+    canvas: { name: '某连锁咖啡品牌', customer: '都市白领，学生，咖啡爱好者', value: '高性价比现磨咖啡，便捷购买体验', channel: '线下门店，小程序点单，外卖平台', relation: '会员体系，社群运营', revenue: '饮品销售，周边商品', resource: '品牌，供应链，门店网络', activity: '产品研发，门店运营，营销推广', partner: '咖啡豆供应商，外卖平台', cost: '门店租金，人力成本，原材料采购' },
+    mkt: { name: '某连锁咖啡品牌', product: '现磨咖啡，高性价比，标准化出品', price: '9.9 元基础款，会员折扣', place: '线下门店，小程序点单，外卖平台', promotion: '联名活动，社交媒体种草，门店促销' }
+  };
+  function firstOr(kws, fallback) { return kws.length ? kws[0] : fallback; }
+  function joinKws(kws) { return kws.length ? kws.join('、') : ''; }
+  function orFallback(text, hint) { return text && text.trim() ? text.trim() : '暂未填写：' + hint; }
+
+  /* ---- 必填校验 ---- */
+  function validateSwot(input) {
+    if (!input.name || !input.name.trim()) { return '请填写企业 / 项目名称。'; }
+    if (!splitKeywords(input.s).length) { return '请至少填写 1 个优势关键词。'; }
+    if (!splitKeywords(input.w).length) { return '请至少填写 1 个劣势关键词。'; }
+    if (!splitKeywords(input.o).length) { return '请至少填写 1 个机会关键词。'; }
+    if (!splitKeywords(input.t).length) { return '请至少填写 1 个威胁关键词。'; }
+    return null;
+  }
+  function validateFive(input) {
+    if (!input.industry || !input.industry.trim()) { return '请填写行业名称。'; }
+    return null;
+  }
+  function validateCanvas(input) {
+    if (!input.name || !input.name.trim()) { return '请填写项目 / 企业名称。'; }
+    if (!input.customer || !input.customer.trim()) { return '请填写目标用户（客户细分）。'; }
+    if (!input.value || !input.value.trim()) { return '请填写价值主张。'; }
+    return null;
+  }
+  function validateMarketing(input) {
+    if (!input.name || !input.name.trim()) { return '请填写产品 / 品牌名称。'; }
+    return null;
+  }
+
+  /* ---- SWOT ---- */
+  function buildSwotResult(input) {
+    var s = splitKeywords(input.s), w = splitKeywords(input.w), o = splitKeywords(input.o), t = splitKeywords(input.t);
+    var name = input.name.trim();
+    var L = [];
+    L.push('# ' + name + '的 SWOT 分析（' + nowString() + '）');
+    L.push('');
+    L.push(DRAFT_NOTE.trim());
+    L.push('');
+    L.push('## 一、优势（S）');
+    s.forEach(function (kw) { L.push('- **' + kw + '**：' + kw + '是' + name + '的重要内部优势，是其核心竞争力的组成部分。'); });
+    L.push('- **策略建议**：充分发挥「' + joinKws(s) + '」等核心优势，将其转化为可复制的差异化能力。');
+    L.push('');
+    L.push('## 二、劣势（W）');
+    w.forEach(function (kw) { L.push('- **' + kw + '**：' + kw + '是' + name + '当前的主要短板，可能制约其进一步发展。'); });
+    L.push('- **策略建议**：针对「' + joinKws(w) + '」制定改进计划，逐步补齐短板。');
+    L.push('');
+    L.push('## 三、机会（O）');
+    o.forEach(function (kw) { L.push('- **' + kw + '**：' + kw + '为' + name + '提供了外部增长空间，值得重点投入。'); });
+    L.push('- **策略建议**：把握「' + joinKws(o) + '」等机遇，及时布局新市场或新产品。');
+    L.push('');
+    L.push('## 四、威胁（T）');
+    t.forEach(function (kw) { L.push('- **' + kw + '**：' + kw + '可能对' + name + '造成冲击，需提前布局应对。'); });
+    L.push('- **策略建议**：针对「' + joinKws(t) + '」等风险建立预警与应对机制。');
+    L.push('');
+    L.push('## 五、组合策略（SO / ST / WO / WT）');
+    L.push('- **SO（增长型）**：利用优势抓住机会——以「' + firstOr(s, '核心优势') + '」切入「' + firstOr(o, '市场机会') + '」，实现快速增长。');
+    L.push('- **ST（多元化/防御）**：利用优势抵御威胁——用「' + firstOr(s, '核心优势') + '」对冲「' + firstOr(t, '外部威胁') + '」带来的冲击。');
+    L.push('- **WO（扭转型）**：改善劣势把握机会——补足「' + firstOr(w, '关键短板') + '」，承接「' + firstOr(o, '市场机会') + '」的机遇。');
+    L.push('- **WT（防御型）**：收缩或规避风险——针对「' + firstOr(w, '关键短板') + '」与「' + firstOr(t, '外部威胁') + '」的组合提前制定防御预案。');
+    L.push('');
+    if (input.business && input.business.trim()) {
+      L.push('> 分析对象核心业务：' + input.business.trim());
+    }
+    return L.join('\n');
+  }
+
+  /* ---- 波特五力 ---- */
+  function judgeIntensity(input) {
+    var score = 0;
+    var players = splitKeywords(input.players);
+    if (players.length >= 4) { score += 2; } else if (players.length >= 2) { score += 1; }
+    if (input.chain && input.chain.trim()) { score += 1; }
+    if (input.extra && input.extra.trim()) { score += 1; }
+    if (input.category && input.category.trim()) { score += 0.5; }
+    var level = score >= 3 ? '高' : (score >= 1.5 ? '中' : '低');
+    var reason = '';
+    if (level === '高') { reason = '行业内主要玩家数量多，价格战与同质化竞争明显，各参与方争夺激烈'; }
+    else if (level === '中') { reason = '行业竞争存在一定强度，玩家数量与差异化程度处于中等水平'; }
+    else { reason = '当前信息下竞争强度相对可控，建议结合更多行业数据进一步验证'; }
+    return { level: level, reason: reason };
+  }
+  function buildFiveForcesResult(input) {
+    var industry = input.industry.trim();
+    var players = splitKeywords(input.players);
+    var category = input.category && input.category.trim() ? input.category.trim() : '该品类';
+    var L = [];
+    L.push('# ' + industry + '波特五力分析（' + nowString() + '）');
+    L.push('');
+    L.push(DRAFT_NOTE.trim());
+    L.push('');
+    if (input.category && input.category.trim()) { L.push('核心品类：' + input.category.trim()); }
+    if (players.length) { L.push('主要玩家：' + joinKws(players)); }
+    if (input.chain && input.chain.trim()) { L.push('上下游基本情况：' + input.chain.trim()); }
+    L.push('');
+    L.push('## 现有竞争者');
+    L.push('- ' + (players.length ? ('主要玩家包括「' + joinKws(players) + '」') : ('行业内已有多个参与者')) + '，彼此在产品与价格上直接竞争。');
+    L.push('- 产品与营销策略趋同，同质化竞争明显，用户转换成本较低，价格战风险较高。');
+    L.push('- 头部玩家通过规模与品牌构筑优势，中小玩家生存空间受到挤压。');
+    L.push('');
+    L.push('## 潜在进入者');
+    L.push('- ' + category + '领域的技术与资本门槛相对适中，潜在进入者较多。');
+    L.push('- 品牌、门店网络与供应链是主要壁垒，头部企业借此构建护城河。');
+    L.push('- 若无明显的政策或资源壁垒，新进入者可能快速涌入，加剧行业竞争。');
+    L.push('');
+    L.push('## 替代品威胁');
+    L.push('- 替代品主要来自' + category + '之外的相近品类（如茶饮、瓶装饮品等），功能与场景存在重叠。');
+    L.push('- 当替代品价格更低或获取更便捷时，用户可能转移消费。');
+    L.push('- 通过产品创新、场景绑定与会员粘性，可有效降低替代品威胁。');
+    L.push('');
+    L.push('## 供应商议价能力');
+    L.push('- 供应商情况：' + orFallback(input.chain, '建议补充上游供应商的集中度与议价情况'));
+    L.push('- 若供应商数量有限且集中，其议价能力较强，会压缩行业利润空间。');
+    L.push('- 头部玩家通过规模采购、长期协议与多元采购渠道对冲供应商议价压力。');
+    L.push('');
+    L.push('## 购买者议价能力');
+    L.push('- 购买者情况：' + orFallback(input.chain, '建议补充下游消费者的价格敏感度与选择空间'));
+    L.push('- 消费者选择丰富、对价格敏感时，购买者议价能力较强，倒逼企业让利。');
+    L.push('- 通过会员体系与差异化产品提升用户粘性，可降低购买者的价格敏感度。');
+    L.push('');
+    var judge = judgeIntensity(input);
+    L.push('## 竞争激烈程度判断');
+    L.push('综合五个维度，' + industry + '整体竞争激烈程度为「' + judge.level + '」：' + judge.reason + '。');
+    return L.join('\n');
+  }
+
+  /* ---- 商业模式画布 ---- */
+  function buildCanvasResult(input) {
+    var name = input.name.trim();
+    var L = [];
+    L.push('# ' + name + ' 商业模式画布（' + nowString() + '）');
+    L.push('');
+    L.push(DRAFT_NOTE.trim());
+    L.push('');
+    var cells = [
+      ['客户细分', input.customer, '谁是你的目标客户，建议按人群或场景描述'],
+      ['价值主张', input.value, '你为客户提供的独特价值是什么'],
+      ['渠道', input.channel, '通过什么渠道触达并服务客户'],
+      ['客户关系', input.relation, '如何获取、维系和提升客户关系'],
+      ['收入来源', input.revenue, '靠什么赚钱，收入模式是什么'],
+      ['关键资源', input.resource, '支撑业务运转的核心资产'],
+      ['关键活动', input.activity, '业务运营中最关键要做的事'],
+      ['关键伙伴', input.partner, '重要的合作伙伴与供应商'],
+      ['成本结构', input.cost, '最主要的成本支出有哪些']
+    ];
+    cells.forEach(function (c) {
+      L.push('## ' + c[0]);
+      L.push('- ' + orFallback(c[1], c[2]));
+      L.push('');
+    });
+    L.push('## 核心优势与潜在风险');
+    var hasRevenue = input.revenue && input.revenue.trim();
+    var hasCost = input.cost && input.cost.trim();
+    var hasValue = input.value && input.value.trim();
+    if (hasRevenue && hasValue) {
+      L.push('- **核心优势**：价值主张（' + input.value.trim() + '）与收入来源（' + input.revenue.trim() + '）匹配清晰，商业模式具备自我造血能力。');
+    } else if (hasValue) {
+      L.push('- **核心优势**：价值主张（' + input.value.trim() + '）明确，具备差异化基础；建议尽快验证收入来源的可持续性。');
+    } else {
+      L.push('- **核心优势**：商业模式仍处于梳理阶段，建议优先明确价值主张与收入来源。');
+    }
+    if (hasCost) {
+      L.push('- **潜在风险**：成本结构（' + input.cost.trim() + '）占比较高，需关注规模效应与成本控制，避免挤压利润空间。');
+    } else {
+      L.push('- **潜在风险**：当前成本结构信息不足，建议补充以评估整体盈利空间与风险。');
+    }
+    return L.join('\n');
+  }
+
+  /* ---- 营销 4P / 4C ---- */
+  var P_ITEMS = [
+    { key: 'product', pLabel: '产品（Product）', cLabel: '客户（Customer）', statusTpl: function (v) { return '当前产品定位与卖点：' + v; }, featureTpl: function (kws) { return '以「' + joinKws(kws) + '」构建产品竞争力，聚焦目标用户核心需求。'; }, optimizeTpl: function (kws) { return '建议持续迭代产品线，强化「' + firstOr(kws, '差异化卖点') + '」，并围绕用户反馈优化体验。'; } },
+    { key: 'price', pLabel: '价格（Price）', cLabel: '成本（Cost）', statusTpl: function (v) { return '当前定价策略：' + v; }, featureTpl: function (kws) { return '定价兼顾市场接受度与利润空间，通过「' + joinKws(kws) + '」提升性价比感知。'; }, optimizeTpl: function (kws) { return '建议结合成本与竞品动态优化定价，探索分层定价与会员价体系。'; } },
+    { key: 'place', pLabel: '渠道（Place）', cLabel: '便利（Convenience）', statusTpl: function (v) { return '当前渠道布局：' + v; }, featureTpl: function (kws) { return '通过「' + joinKws(kws) + '」实现线上线下多触点覆盖，触达便捷。'; }, optimizeTpl: function (kws) { return '建议优化渠道组合与转化路径，提升覆盖密度和购买便利性。'; } },
+    { key: 'promotion', pLabel: '推广（Promotion）', cLabel: '沟通（Communication）', statusTpl: function (v) { return '当前推广方式：' + v; }, featureTpl: function (kws) { return '以「' + joinKws(kws) + '」为主要推广手段，兼顾曝光与转化。'; }, optimizeTpl: function (kws) { return '建议强化内容营销与私域运营，提升推广投入产出比。'; } }
+  ];
+  function buildMarketingResult(input, perspective) {
+    var name = input.name.trim();
+    var is4c = perspective === '4c';
+    var L = [];
+    L.push('# ' + name + ' 营销策略分析（' + (is4c ? '4C 视角' : '4P 视角') + ' · ' + nowString() + '）');
+    L.push('');
+    L.push(DRAFT_NOTE.trim());
+    L.push('');
+    P_ITEMS.forEach(function (item) {
+      var raw = input[item.key] || '';
+      var kws = splitKeywords(raw);
+      var status = raw && raw.trim() ? item.statusTpl(raw.trim()) : '暂未填写：建议补充相关信息';
+      var feature = kws.length ? item.featureTpl(kws) : '当前该要素信息不足，建议结合目标用户进一步明确。';
+      var optimize = item.optimizeTpl(kws);
+      L.push('## ' + (is4c ? item.cLabel : item.pLabel));
+      L.push('- **现状**：' + status);
+      L.push('- **特点**：' + feature);
+      L.push('- **优化方向**：' + optimize);
+      L.push('');
+    });
+    if (is4c) {
+      L.push('> 4C 视角以用户为中心：客户价值（Customer）、用户成本（Cost）、购买便利（Convenience）、双向沟通（Communication）。');
+    } else {
+      L.push('> 4P 视角以企业为中心：产品（Product）、价格（Price）、渠道（Place）、推广（Promotion）。可点击「切换为 4C 视角」查看用户导向版本。');
+    }
+    return L.join('\n');
+  }
+  function togglePerspective(p) { return p === '4c' ? '4p' : '4c'; }
+
+  /* ---- 表单读取 / 示例 / 自动保存（DOM 层）---- */
+  function readForm(module) {
+    var input = {};
+    FIELD_MAP[module].forEach(function (pair) {
+      var el = document.getElementById(pair[0]);
+      input[pair[1]] = el ? el.value : '';
+    });
+    return input;
+  }
+  function saveGenerated(module, input, output, backfillId) {
+    var title = input.name || input.industry || MODULE_NAMES[module];
+    var rec = buildRecord(module, title, input, output);
+    if (backfillId) {
+      rec.id = backfillId;
+      updateRecord(rec);
+      return { record: rec, updated: true };
+    }
+    addRecord(rec);
+    return { record: rec, updated: false };
+  }
+  function fillExample(module) {
+    var ex = EXAMPLES[module];
+    if (!ex) { return; }
+    FIELD_MAP[module].forEach(function (pair) {
+      var el = document.getElementById(pair[0]);
+      if (el && ex[pair[1]] != null) { el.value = ex[pair[1]]; }
+    });
+    runGenerate(module);
+  }
+  function runGenerate(module) {
+    var input = readForm(module);
+    var validators = { swot: validateSwot, five: validateFive, canvas: validateCanvas, mkt: validateMarketing };
+    var builders = { swot: buildSwotResult, five: buildFiveForcesResult, canvas: buildCanvasResult, mkt: function (i) { return buildMarketingResult(i, currentPerspective[module] || '4p'); } };
+    var err = validators[module](input);
+    var msgId = module + '-msg';
+    if (err) { showMsg(msgId, 'error', err); return; }
+    var output = builders[module](input);
+    document.getElementById(OUTPUT_MAP[module]).value = output;
+    var saved = saveGenerated(module, input, output, currentBackfillId[module]);
+    currentBackfillId[module] = null;
+    showMsg(msgId, 'ok', saved.updated ? '已更新回填的历史记录。' : '已生成，并自动保存到历史记录。');
+  }
+  var currentPerspective = { mkt: '4p' };
+  var currentBackfillId = {};
+  function bindModuleEvents() {
+    ['swot', 'five', 'canvas', 'mkt'].forEach(function (mod) {
+      var gen = document.getElementById(mod + '-generate');
+      if (gen) {
+        gen.addEventListener('click', function () { runGenerate(mod); });
+      }
+      var ex = document.getElementById(mod + '-example');
+      if (ex) {
+        ex.addEventListener('click', function () { fillExample(mod); });
+      }
+    });
+    var toggle = document.getElementById('mkt-toggle');
+    if (toggle) {
+      toggle.addEventListener('click', function () {
+        var next = togglePerspective(currentPerspective.mkt);
+        currentPerspective.mkt = next;
+        toggle.textContent = next === '4c' ? '切换为 4P 视角' : '切换为 4C 视角';
+        var input = readForm('mkt');
+        if (input.name && input.name.trim()) {
+          var output = buildMarketingResult(input, next);
+          document.getElementById('mkt-output').value = output;
+          saveGenerated('mkt', input, output, null);
+          showMsg('mkt-msg', 'ok', '已切换为' + (next === '4c' ? '4C' : '4P') + '视角并保存。');
+        }
+      });
+    }
+  }
+
+  BAMT.validateSwot = validateSwot;
+  BAMT.validateFive = validateFive;
+  BAMT.validateCanvas = validateCanvas;
+  BAMT.validateMarketing = validateMarketing;
+  BAMT.buildSwotResult = buildSwotResult;
+  BAMT.buildFiveForcesResult = buildFiveForcesResult;
+  BAMT.buildCanvasResult = buildCanvasResult;
+  BAMT.buildMarketingResult = buildMarketingResult;
+  BAMT.togglePerspective = togglePerspective;
+  BAMT.saveGenerated = saveGenerated;
+  BAMT.EXAMPLES = EXAMPLES;
+
+  function init() {
+    var navs = document.querySelectorAll('#main-nav .nav-item');
+    for (var i = 0; i < navs.length; i++) {
+      navs[i].addEventListener('click', function () {
+        showView(this.getAttribute('data-view'));
+      });
+    }
+    var goButtons = document.querySelectorAll('[data-goto]');
+    for (var j = 0; j < goButtons.length; j++) {
+      goButtons[j].addEventListener('click', function () {
+        showView(this.getAttribute('data-goto'));
+      });
+    }
+    bindCommonEvents();
+    bindModuleEvents();
+  }
+
+  if (typeof document !== 'undefined' && document.getElementById) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  }
+  window.BAMT = BAMT;
+})();
+</script>
+</body>
+</html>
